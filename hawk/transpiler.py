@@ -110,7 +110,7 @@ class CTranspiler:
             self.declared_vars.add(stmt.name)
             if val_type == "Matrix*":
                 return f"{pad}Matrix *{stmt.name} = {val_code};"
-            elif val_type == "const char*":
+            elif val_type in ("const char*", "char*"):
                 return f"{pad}const char *{stmt.name} = {val_code};"
             else:
                 return f"{pad}double {stmt.name} = {val_code};"
@@ -127,7 +127,7 @@ class CTranspiler:
                 e_code, e_type = self.transpile_expr(e)
                 if e_type == "Matrix*":
                     lines.append(f"{pad}printf(\"\\n\"); matrix_print({e_code});")
-                elif e_type == "const char*":
+                elif e_type in ("const char*", "char*"):
                     lines.append(f"{pad}printf(\"%s \", {e_code});")
                 elif e_type == "bool":
                     lines.append(f"{pad}printf(\"%s \", ({e_code}) ? \"true\" : \"false\");")
@@ -262,6 +262,12 @@ class CTranspiler:
 
         if isinstance(expr, CallExpr):
             # Встроенные функции
+            if expr.callee == "input":
+                arg_code = self.transpile_expr(expr.args[0])[0] if expr.args else '""'
+                return (f"hawk_input_str({arg_code})", "char*")
+            if expr.callee == "input_num":
+                arg_code = self.transpile_expr(expr.args[0])[0] if expr.args else '""'
+                return (f"hawk_input_num({arg_code})", "double")
             if expr.callee == "det":
                 m_code, _ = self.transpile_expr(expr.args[0])
                 return (f"matrix_det({m_code})", "double")

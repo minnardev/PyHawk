@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 
 /*
@@ -216,4 +217,36 @@ static inline void matrix_print(Matrix *m) {
     printf("]\n");
 }
 
+/* Ввод строки пользователем (консольный prompt) */
+static inline char* hawk_input_str(const char *prompt) {
+    if (prompt && strlen(prompt) > 0) {
+        printf("%s", prompt);
+        fflush(stdout);
+    }
+    static char buffer[1024];
+    if (fgets(buffer, sizeof(buffer), stdin)) {
+        size_t len = strlen(buffer);
+        if (len > 0 && (buffer[len - 1] == '\n' || buffer[len - 1] == '\r')) {
+            buffer[len - 1] = '\0';
+        }
+    } else {
+        buffer[0] = '\0';
+    }
+    return buffer;
+}
+
+/* Ввод числа пользователем */
+static inline double hawk_input_num(const char *prompt) {
+    if (prompt && strlen(prompt) > 0) {
+        printf("%s", prompt);
+        fflush(stdout);
+    }
+    double val = 0.0;
+    if (scanf("%lf", &val) != 1) {
+        val = 0.0;
+    }
+    return val;
+}
+
 #endif /* HAWK_MATRIX_H */
+
