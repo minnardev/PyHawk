@@ -1,0 +1,21 @@
+# 🦅 identity.hwk (Пример из манифеста Hawk)
+
+set r: float = 5
+set S = pi r^2
+print "Area:", S
+
+set m = [1, 2 ; 3, 4]
+set mt = m'
+print "m' ="
+print mt
+print "det =", det(m)
+
+if (1 < r < 10) {
+    print "r in range"
+}
+
+fn f(x) {
+    return 2x + 1
+}
+
+print "f(3) =", f(3)

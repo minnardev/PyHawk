@@ -1,0 +1,376 @@
+"""
+🦅 Hawk Programming Language — Interpreter (Прямой рантайм на Python)
+"""
+
+import math
+from typing import Any, Dict, List, Optional
+from hawk.ast_nodes import (
+    Stmt, Expr, SetStmt, IndexAssignStmt, PrintStmt, IfStmt, WhileStmt, ForStmt,
+    FnDef, ReturnStmt, ExprStmt,
+    NumberExpr, StringExpr, VarExpr, MatrixLiteral, MatrixIndexExpr,
+    TransposeExpr, BinOpExpr, UnaryOpExpr, CallExpr
+)
+
+
+class ReturnSignal(Exception):
+    def __init__(self, value: Any):
+        self.value = value
+
+
+class HawkMatrix:
+    def __init__(self, rows: int, cols: int, data: Optional[List[float]] = None):
+        self.rows = rows
+        self.cols = cols
+        if data is not None:
+            self.data = list(data)
+        else:
+            self.data = [0.0] * (rows * cols)
+
+    def get(self, r: int, c: int) -> float:
+        if 0 <= r < self.rows and 0 <= c < self.cols:
+            return self.data[r * self.cols + c]
+        raise IndexError(f"Hawk MatrixError: Индекс [{r}, {c}] вне границ {self.rows}x{self.cols}")
+
+    def set(self, r: int, c: int, val: float):
+        if 0 <= r < self.rows and 0 <= c < self.cols:
+            self.data[r * self.cols + c] = float(val)
+        else:
+            raise IndexError(f"Hawk MatrixError: Индекс [{r}, {c}] вне границ {self.rows}x{self.cols}")
+
+    def transpose(self) -> 'HawkMatrix':
+        res = HawkMatrix(self.cols, self.rows)
+        for r in range(self.rows):
+            for c in range(self.cols):
+                res.set(c, r, self.get(r, c))
+        return res
+
+    def mult(self, other: Any) -> Any:
+        if isinstance(other, (int, float)):
+            # Умножение на скаляр
+            return HawkMatrix(self.rows, self.cols, [x * other for x in self.data])
+        if isinstance(other, HawkMatrix):
+            if self.cols != other.rows:
+                raise ValueError(f"Hawk MatrixError: Нельзя умножить матрицы {self.rows}x{self.cols} и {other.rows}x{other.cols}")
+            res = HawkMatrix(self.rows, other.cols)
+            for r in range(self.rows):
+                for c in range(other.cols):
+                    s = sum(self.get(r, k) * other.get(k, c) for k in range(self.cols))
+                    res.set(r, c, s)
+            return res
+        raise TypeError(f"Hawk TypeError: Неподдерживаемая операция умножения матрицы на {type(other)}")
+
+    def add(self, other: 'HawkMatrix') -> 'HawkMatrix':
+        if self.rows != other.rows or self.cols != other.cols:
+            raise ValueError("Hawk MatrixError: Размеры матриц для сложения не совпадают")
+        return HawkMatrix(self.rows, self.cols, [a + b for a, b in zip(self.data, other.data)])
+
+    def sub(self, other: 'HawkMatrix') -> 'HawkMatrix':
+        if self.rows != other.rows or self.cols != other.cols:
+            raise ValueError("Hawk MatrixError: Размеры матриц для вычитания не совпадают")
+        return HawkMatrix(self.rows, self.cols, [a - b for a, b in zip(self.data, other.data)])
+
+    def det(self) -> float:
+        if self.rows != self.cols:
+            raise ValueError("Hawk MatrixError: Определитель существует только для квадратных матриц")
+        n = self.rows
+        if n == 1:
+            return self.data[0]
+        if n == 2:
+            return self.get(0, 0) * self.get(1, 1) - self.get(0, 1) * self.get(1, 0)
+        if n == 3:
+            a, b, c = self.get(0, 0), self.get(0, 1), self.get(0, 2)
+            d, e, f = self.get(1, 0), self.get(1, 1), self.get(1, 2)
+            g, h, i = self.get(2, 0), self.get(2, 1), self.get(2, 2)
+            return a*(e*i - f*h) - b*(d*i - f*g) + c*(d*h - e*g)
+
+        # Метод Гаусса для n > 3
+        mat = [list(self.data[i * n:(i + 1) * n]) for i in range(n)]
+        d = 1.0
+        for col in range(n):
+            pivot = col
+            for row in range(col + 1, n):
+                if abs(mat[row][col]) > abs(mat[pivot][col]):
+                    pivot = row
+            if abs(mat[pivot][col]) < 1e-12:
+                return 0.0
+            if pivot != col:
+                mat[col], mat[pivot] = mat[pivot], mat[col]
+                d = -d
+            d *= mat[col][col]
+            for row in range(col + 1, n):
+                factor = mat[row][col] / mat[col][col]
+                for k in range(col, n):
+                    mat[row][k] -= factor * mat[col][k]
+        return d
+
+    def __repr__(self):
+        row_strs = []
+        for r in range(self.rows):
+            row_vals = [f"{int(x)}" if x == int(x) else f"{x:.4g}" for x in [self.get(r, c) for c in range(self.cols)]]
+            row_strs.append(", ".join(row_vals))
+        return "[" + " ; ".join(row_strs) + "]"
+
+
+class Environment:
+    def __init__(self, parent: Optional['Environment'] = None):
+        self.parent = parent
+        self.vars: Dict[str, Any] = {}
+
+    def get(self, name: str) -> Any:
+        if name in self.vars:
+            return self.vars[name]
+        if self.parent:
+            return self.parent.get(name)
+        raise NameError(f"Hawk NameError: Переменная '{name}' не найдена!")
+
+    def set(self, name: str, val: Any):
+        curr = self
+        while curr:
+            if name in curr.vars:
+                curr.vars[name] = val
+                return
+            curr = curr.parent
+        self.vars[name] = val
+
+    def assign_existing(self, name: str, val: Any) -> bool:
+        if name in self.vars:
+            self.vars[name] = val
+            return True
+        if self.parent:
+            return self.parent.assign_existing(name, val)
+        return False
+
+
+class Interpreter:
+    def __init__(self, print_func=print, input_func=input):
+        self.print_func = print_func
+        self.input_func = input_func
+        self.globals = Environment()
+        self.functions: Dict[str, FnDef] = {}
+        self._init_builtins()
+
+    def _init_builtins(self):
+        self.globals.set("pi", math.pi)
+        self.globals.set("e", math.e)
+
+    def run(self, stmts: List[Stmt]) -> Any:
+        try:
+            return self.exec_block(stmts, self.globals)
+        except ReturnSignal as r:
+            return r.value
+
+    def exec_block(self, stmts: List[Stmt], env: Environment) -> Any:
+        res = None
+        for s in stmts:
+            res = self.exec_stmt(s, env)
+        return res
+
+    def exec_stmt(self, stmt: Stmt, env: Environment) -> Any:
+        if isinstance(stmt, SetStmt):
+            val = self.eval_expr(stmt.value, env)
+            env.set(stmt.name, val)
+            return val
+
+        if isinstance(stmt, IndexAssignStmt):
+            m = env.get(stmt.matrix_name)
+            if not isinstance(m, HawkMatrix):
+                raise TypeError(f"Hawk TypeError: '{stmt.matrix_name}' не является матрицей!")
+            r = int(self.eval_expr(stmt.row, env))
+            c = int(self.eval_expr(stmt.column, env)) if stmt.column else 0
+            val = float(self.eval_expr(stmt.value, env))
+            m.set(r, c, val)
+            return val
+
+        if isinstance(stmt, PrintStmt):
+            parts = []
+            for e in stmt.expressions:
+                val = self.eval_expr(e, env)
+                if isinstance(val, float) and val == int(val):
+                    parts.append(str(int(val)))
+                else:
+                    parts.append(str(val))
+            self.print_func(*parts)
+            return None
+
+        if isinstance(stmt, FnDef):
+            self.functions[stmt.name] = stmt
+            return None
+
+        if isinstance(stmt, ReturnStmt):
+            val = self.eval_expr(stmt.value, env) if stmt.value else None
+            raise ReturnSignal(val)
+
+        if isinstance(stmt, IfStmt):
+            cond = self.eval_expr(stmt.condition, env)
+            if cond:
+                return self.exec_block(stmt.then_body, Environment(env))
+            elif stmt.else_body:
+                return self.exec_block(stmt.else_body, Environment(env))
+            return None
+
+        if isinstance(stmt, WhileStmt):
+            while self.eval_expr(stmt.condition, env):
+                self.exec_block(stmt.body, Environment(env))
+            return None
+
+        if isinstance(stmt, ForStmt):
+            loop_env = Environment(env)
+            if stmt.init:
+                self.exec_stmt(stmt.init, loop_env)
+            while stmt.condition is None or self.eval_expr(stmt.condition, loop_env):
+                self.exec_block(stmt.body, Environment(loop_env))
+                if stmt.step:
+                    self.exec_stmt(stmt.step, loop_env)
+            return None
+
+        if isinstance(stmt, ExprStmt):
+            return self.eval_expr(stmt.expr, env)
+
+        return None
+
+    def eval_expr(self, expr: Expr, env: Environment) -> Any:
+        if isinstance(expr, NumberExpr):
+            return expr.value
+
+        if isinstance(expr, StringExpr):
+            # Простая интерполяция f-строк {expr}
+            s = expr.value
+            if "{" in s and "}" in s:
+                import re
+                def repl(match):
+                    var_name = match.group(1).strip()
+                    try:
+                        v = env.get(var_name)
+                        if isinstance(v, float) and v == int(v):
+                            return str(int(v))
+                        return str(v)
+                    except Exception:
+                        return match.group(0)
+                s = re.sub(r"\{([^}]+)\}", repl, s)
+            return s
+
+        if isinstance(expr, VarExpr):
+            return env.get(expr.name)
+
+        if isinstance(expr, MatrixLiteral):
+            rows_data = []
+            cols_count = -1
+            flat_data = []
+            for r in expr.rows:
+                row_vals = [float(self.eval_expr(e, env)) for e in r]
+                if cols_count == -1:
+                    cols_count = len(row_vals)
+                elif cols_count != len(row_vals):
+                    raise ValueError(f"Hawk MatrixError: Неровные строки матрицы (ожидалось {cols_count} элементов, получено {len(row_vals)})")
+                flat_data.extend(row_vals)
+            rows_count = len(expr.rows)
+            return HawkMatrix(rows=rows_count, cols=cols_count if cols_count != -1 else 0, data=flat_data)
+
+        if isinstance(expr, MatrixIndexExpr):
+            m = self.eval_expr(expr.matrix, env)
+            if not isinstance(m, HawkMatrix):
+                raise TypeError("Индексация [r, c] применима только к матрицам")
+            r = int(self.eval_expr(expr.row, env))
+            c = int(self.eval_expr(expr.column, env)) if expr.column else 0
+            return m.get(r, c)
+
+        if isinstance(expr, TransposeExpr):
+            m = self.eval_expr(expr.matrix, env)
+            if isinstance(m, HawkMatrix):
+                return m.transpose()
+            raise TypeError("Оператор транспонирования ' применим только к матрицам")
+
+        if isinstance(expr, UnaryOpExpr):
+            op = self.eval_expr(expr.operand, env)
+            if expr.op == "-":
+                if isinstance(op, HawkMatrix):
+                    return op.mult(-1.0)
+                return -op
+            if expr.op == "not":
+                return not op
+
+        if isinstance(expr, BinOpExpr):
+            l = self.eval_expr(expr.left, env)
+            r = self.eval_expr(expr.right, env)
+
+            op = expr.op
+            if op == "+":
+                if isinstance(l, HawkMatrix) and isinstance(r, HawkMatrix):
+                    return l.add(r)
+                if isinstance(l, str) or isinstance(r, str):
+                    return str(l) + str(r)
+                return l + r
+            if op == "-":
+                if isinstance(l, HawkMatrix) and isinstance(r, HawkMatrix):
+                    return l.sub(r)
+                return l - r
+            if op == "*":
+                if isinstance(l, HawkMatrix) or isinstance(r, HawkMatrix):
+                    if isinstance(l, HawkMatrix):
+                        return l.mult(r)
+                    return r.mult(l)
+                if isinstance(l, str) or isinstance(r, str):
+                    raise TypeError("Hawk Error: Нельзя умножать строки! Чтобы вывести несколько значений, разделите их запятой: print \"Hello\", name")
+                return l * r
+            if op == "/":
+                return l / r
+            if op == "^":
+                return l ** r
+
+            # Сравнения
+            if op == "=":  # Равенство!
+                if isinstance(l, HawkMatrix) and isinstance(r, HawkMatrix):
+                    return l.rows == r.rows and l.cols == r.cols and l.data == r.data
+                return l == r
+            if op == "!=":
+                return l != r
+            if op == ">":
+                return l > r
+            if op == "<":
+                return l < r
+            if op == ">=":
+                return l >= r
+            if op == "<=":
+                return l <= r
+            if op == "and":
+                return l and r
+            if op == "or":
+                return l or r
+
+        if isinstance(expr, CallExpr):
+            args = [self.eval_expr(a, env) for a in expr.args]
+
+            # Встроенные функции
+            if expr.callee == "det":
+                if isinstance(args[0], HawkMatrix):
+                    return args[0].det()
+                raise TypeError("det() требует матрицу")
+            if expr.callee == "sin": return math.sin(args[0])
+            if expr.callee == "cos": return math.cos(args[0])
+            if expr.callee == "tan": return math.tan(args[0])
+            if expr.callee == "sqrt": return math.sqrt(args[0])
+            if expr.callee == "abs": return abs(args[0])
+            if expr.callee == "input":
+                prompt = args[0] if args else ""
+                raw = self.input_func(str(prompt))
+                try:
+                    return float(raw)
+                except ValueError:
+                    return raw
+
+            # Пользовательские функции
+            if expr.callee in self.functions:
+                fn_def = self.functions[expr.callee]
+                if len(args) != len(fn_def.params):
+                    raise TypeError(f"Функция '{expr.callee}' ожидает {len(fn_def.params)} аргументов, а передано {len(args)}")
+                call_env = Environment(self.globals)
+                for p_name, arg_val in zip(fn_def.params, args):
+                    call_env.set(p_name, arg_val)
+                try:
+                    return self.exec_block(fn_def.body, call_env)
+                except ReturnSignal as ret:
+                    return ret.value
+
+            raise NameError(f"Hawk Error: Неизвестная функция '{expr.callee}'")
+
+        raise NotImplementedError(f"Неизвестный тип выражения: {type(expr)}")

@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyhawk"
+version = "0.1.0"
+description = "PyHawk Programming Language — Sharp as a hawk, fast as math (Python Prototype)"
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [
+    { name = "minnardev" }
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development :: Compilers",
+    "Topic :: Software Development :: Interpreters",
+]
+
+[project.scripts]
+pyhawk = "hawk_cli:main"
+hawk = "hawk_cli:main"

@@ -1,0 +1,24 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# C build artifacts
+*.o
+*.out
+*.exe
+examples/*_app
+examples/matrix
+examples/math_demo
+examples/identity
+
+# OS / Editor
+.DS_Store
+.vscode/
+.idea/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/

@@ -1,0 +1,106 @@
+{
+  "name": "hawk-language",
+  "displayName": "PyHawk",
+  "icon": "./icon.png",
+  "description": "PyHawk Programming Language support with native compiler & runner",
+  "version": "0.2.0",
+  "publisher": "minnardev",
+  "engines": {
+    "vscode": "^1.70.0"
+  },
+  "main": "./extension.js",
+  "activationEvents": [
+    "onLanguage:hawk"
+  ],
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "hawk",
+        "aliases": [
+          "Hawk",
+          "hawk"
+        ],
+        "extensions": [
+          ".hwk"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "hawk",
+        "scopeName": "source.hawk",
+        "path": "./syntaxes/hawk.tmLanguage.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "hawk.runFile",
+        "title": "Hawk: Run File (Interpreter)",
+        "category": "Hawk",
+        "icon": "$(play)"
+      },
+      {
+        "command": "hawk.buildFile",
+        "title": "Hawk: Build & Run Native Binary (C99 -O3)",
+        "category": "Hawk",
+        "icon": "$(gear)"
+      },
+      {
+        "command": "hawk.openRepl",
+        "title": "Hawk: Open REPL",
+        "category": "Hawk",
+        "icon": "$(terminal)"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "hawk.runFile",
+          "when": "editorLangId == hawk || resourceExtname == .hwk",
+          "group": "navigation@1"
+        },
+        {
+          "command": "hawk.buildFile",
+          "when": "editorLangId == hawk || resourceExtname == .hwk",
+          "group": "navigation@2"
+        }
+      ],
+      "editor/title/run": [
+        {
+          "command": "hawk.runFile",
+          "when": "editorLangId == hawk || resourceExtname == .hwk",
+          "group": "navigation@1"
+        },
+        {
+          "command": "hawk.buildFile",
+          "when": "editorLangId == hawk || resourceExtname == .hwk",
+          "group": "navigation@2"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "hawk.runFile",
+          "when": "editorLangId == hawk || resourceExtname == .hwk",
+          "group": "Hawk@1"
+        },
+        {
+          "command": "hawk.buildFile",
+          "when": "editorLangId == hawk || resourceExtname == .hwk",
+          "group": "Hawk@2"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "hawk.runFile",
+        "key": "cmd+alt+r",
+        "mac": "cmd+alt+r",
+        "when": "editorTextFocus && (editorLangId == hawk || resourceExtname == .hwk)"
+      }
+    ]
+  }
+}
