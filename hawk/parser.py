@@ -4,6 +4,7 @@
 
 from typing import List, Optional
 from hawk.lexer import Token, TokenType
+from hawk.errors import HawkSyntaxError
 from hawk.ast_nodes import (
     Stmt, Expr, SetStmt, IndexAssignStmt, PrintStmt, IfStmt, WhileStmt, ForStmt,
     FnDef, ReturnStmt, ExprStmt,
@@ -39,8 +40,9 @@ class Parser:
         tok = self.peek()
         if tok.type == type_:
             return self.advance()
-        msg = error_msg or f"Hawk SyntaxError: Ожидался токен {type_.name}, а получен {tok.type.name} ('{tok.value}') на строке {tok.line}, столбец {tok.col}"
-        raise SyntaxError(msg)
+        val_len = len(str(tok.value)) if tok.value else 1
+        msg = error_msg or f"Ожидался токен {type_.name}, а получен {tok.type.name} ('{tok.value}')"
+        raise HawkSyntaxError(msg, line=tok.line, col=tok.col, end_col=tok.col + val_len)
 
     def skip_newlines(self):
         while self.peek().type in (TokenType.NEWLINE, TokenType.SEMICOLON):
@@ -101,10 +103,11 @@ class Parser:
                 # Попробуем разобрать m[r, c] = expr
                 return self.parse_index_assign()
             elif next_tok.type == TokenType.EQ:
-                raise SyntaxError(
-                    f"Hawk Error (строка {tok.line}): Присваивание переменной требует ключевое слово 'set'.\n"
-                    f"  Вместо '{tok.value} = ...' напишите: 'set {tok.value} = ...'\n"
-                    f"  (В Hawk знак '=' внутри выражений означает только проверку равенства)."
+                raise HawkSyntaxError(
+                    f"Присваивание переменной требует ключевое слово 'set'. Напишите: 'set {tok.value} = ...'",
+                    line=tok.line,
+                    col=tok.col,
+                    end_col=next_tok.col + 1
                 )
 
         # Выражение как инструкция (например вызов функции)
@@ -397,7 +400,8 @@ class Parser:
         if self.match(TokenType.LBRACKET):
             return self.parse_matrix_literal(tok)
 
-        raise SyntaxError(f"Hawk SyntaxError: Неожиданный токен {tok.type.name} ('{tok.value}') на строке {tok.line}, столбец {tok.col}")
+        val_len = len(str(tok.value)) if tok.value else 1
+        raise HawkSyntaxError(f"Неожиданный токен {tok.type.name} ('{tok.value}')", line=tok.line, col=tok.col, end_col=tok.col + val_len)
 
     def parse_matrix_literal(self, start_tok: Token) -> MatrixLiteral:
         rows: List[List[Expr]] = []

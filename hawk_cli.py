@@ -130,21 +130,36 @@ def cmd_repl(args):
             print(f"Hawk Error: {e}")
 
 
+def cmd_check(args):
+    import json
+    if args.stdin:
+        code = sys.stdin.read()
+    else:
+        if not args.file or not os.path.exists(args.file):
+            print(json.dumps([{"line": 1, "col": 1, "end_col": 5, "message": f"Файл '{args.file}' не найден", "severity": "error"}]))
+            return
+        with open(args.file, "r", encoding="utf-8") as f:
+            code = f.read()
+
+    from hawk.diagnostics import analyze
+    diags = analyze(code)
+    print(json.dumps(diags, ensure_ascii=False))
+
+
 def main():
     parser = argparse.ArgumentParser(
-        prog="hawk",
-        description="🦅 Hawk — быстрый язык с упором на математику, матрицы и компиляцию в C"
+        description="🦅 PyHawk Programming Language — CLI («Sharp as a hawk, fast as math»)"
     )
     subparsers = parser.add_subparsers(dest="subcommand", help="Команда для выполнения")
 
     # run
-    p_run = subparsers.add_parser("run", help="Быстрый запуск .hwk через интерпретатор")
+    p_run = subparsers.add_parser("run", help="Запустить файл через интерпретатор")
     p_run.add_argument("file", help="Путь к файлу .hwk")
 
     # build
-    p_build = subparsers.add_parser("build", help="Скомпилировать .hwk в нативный бинарник (через C и clang)")
+    p_build = subparsers.add_parser("build", help="Скомпилировать в нативный бинарник (C99 + clang -O3)")
     p_build.add_argument("file", help="Путь к файлу .hwk")
-    p_build.add_argument("-o", "--output", help="Имя выходного бинарного файла", default=None)
+    p_build.add_argument("-o", "--output", help="Имя выходного бинарника")
 
     # emit
     p_emit = subparsers.add_parser("emit", help="Показать сгенерированный чистый код на Си")
@@ -152,6 +167,11 @@ def main():
 
     # repl
     subparsers.add_parser("repl", help="Интерактивная консоль (REPL)")
+
+    # check
+    p_check = subparsers.add_parser("check", help="Проверка синтаксиса и вывод диагностик в JSON")
+    p_check.add_argument("file", nargs="?", default=None, help="Путь к файлу .hwk")
+    p_check.add_argument("--stdin", action="store_true", help="Читать код из стандартного ввода")
 
     # version
     subparsers.add_parser("version", help="Версия Hawk")
@@ -166,6 +186,8 @@ def main():
         cmd_emit(args)
     elif args.subcommand == "repl":
         cmd_repl(args)
+    elif args.subcommand == "check":
+        cmd_check(args)
     elif args.subcommand == "version":
         print("🦅 PyHawk v0.1 (Python prototype) — Springfield-to-Native Edition")
     else:
