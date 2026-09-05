@@ -146,6 +146,27 @@ def cmd_check(args):
     print(json.dumps(diags, ensure_ascii=False))
 
 
+def cmd_format(args):
+    from hawk.formatter import format_code
+    if args.stdin:
+        code = sys.stdin.read()
+        formatted = format_code(code)
+        sys.stdout.write(formatted)
+    else:
+        if not args.file or not os.path.exists(args.file):
+            print(f"Hawk Error: File '{args.file}' not found!")
+            sys.exit(1)
+        with open(args.file, "r", encoding="utf-8") as f:
+            code = f.read()
+        formatted = format_code(code)
+        if args.write:
+            with open(args.file, "w", encoding="utf-8") as f:
+                f.write(formatted)
+            print(f"✨ Formatted '{args.file}'")
+        else:
+            sys.stdout.write(formatted)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="🦅 PyHawk Programming Language — CLI (\"Sharp as a hawk, fast as math\")"
@@ -173,6 +194,12 @@ def main():
     p_check.add_argument("file", nargs="?", default=None, help="Path to .hwk file")
     p_check.add_argument("--stdin", action="store_true", help="Read code from standard input")
 
+    # format
+    p_format = subparsers.add_parser("format", help="Format Hawk source code")
+    p_format.add_argument("file", nargs="?", default=None, help="Path to .hwk file")
+    p_format.add_argument("-w", "--write", action="store_true", help="Format and overwrite file in-place")
+    p_format.add_argument("--stdin", action="store_true", help="Read code from stdin and output formatted code to stdout")
+
     # version
     subparsers.add_parser("version", help="Print Hawk version")
 
@@ -188,6 +215,8 @@ def main():
         cmd_repl(args)
     elif args.subcommand == "check":
         cmd_check(args)
+    elif args.subcommand == "format":
+        cmd_format(args)
     elif args.subcommand == "version":
         print("🦅 PyHawk v0.1 (Python prototype) — Springfield-to-Native Edition")
     else:

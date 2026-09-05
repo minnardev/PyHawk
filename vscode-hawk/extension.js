@@ -95,6 +95,43 @@ function scheduleSyntaxCheck(document) {
     }, 200);
 }
 
+function formatHawkDocument(document) {
+    return new Promise((resolve) => {
+        const { bin, cliPath } = getCliCommand();
+        let child;
+        try {
+            child = spawn(bin, [cliPath, 'format', '--stdin']);
+        } catch (e) {
+            resolve([]);
+            return;
+        }
+
+        let stdout = '';
+        child.stdout.on('data', chunk => {
+            stdout += chunk;
+        });
+
+        child.on('error', () => {
+            resolve([]);
+        });
+
+        child.on('close', code => {
+            if (code === 0 && stdout) {
+                const fullRange = new vscode.Range(
+                    document.positionAt(0),
+                    document.positionAt(document.getText().length)
+                );
+                resolve([vscode.TextEdit.replace(fullRange, stdout)]);
+            } else {
+                resolve([]);
+            }
+        });
+
+        child.stdin.write(document.getText());
+        child.stdin.end();
+    });
+}
+
 function activate(context) {
     // 1. Diagnostics collection for red squiggly underlines
     diagnosticCollection = vscode.languages.createDiagnosticCollection('pyhawk');
@@ -175,7 +212,14 @@ function activate(context) {
         terminal.sendText('pyhawk repl');
     });
 
-    context.subscriptions.push(runDisposable, buildDisposable, replDisposable);
+    // 5. Document Formatting Provider (Shift+Option+F / Format Document)
+    let formatDisposable = vscode.languages.registerDocumentFormattingEditProvider('hawk', {
+        provideDocumentFormattingEdits(document) {
+            return formatHawkDocument(document);
+        }
+    });
+
+    context.subscriptions.push(runDisposable, buildDisposable, replDisposable, formatDisposable);
 }
 
 function deactivate() {

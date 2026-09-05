@@ -176,6 +176,22 @@ class TestHawk(unittest.TestCase):
         self.assertTrue(any("mod: 1" in line for line in out))
         self.assertTrue(any("flag: true" in line for line in out))
 
+    def test_formatter(self):
+        from hawk.formatter import format_code
+        messy_code = """
+set a = input("Enter: ")
+
+    if (a = 0) {
+        print "Win"
+    }
+    else {
+        print "Lose"
+    }
+        """
+        formatted = format_code(messy_code)
+        expected = 'set a = input("Enter: ")\n\nif (a = 0) {\n    print "Win"\n} else {\n    print "Lose"\n}\n'
+        self.assertEqual(formatted, expected)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
