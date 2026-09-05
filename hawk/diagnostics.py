@@ -13,10 +13,10 @@ from hawk.parser import Parser
 def _extract_line_col(msg: str) -> Tuple[int, int]:
     line = 1
     col = 1
-    m_line = re.search(r'строке?\s*(\d+)', msg) or re.search(r'line\s*(\d+)', msg, re.I)
+    m_line = re.search(r'line\s*(\d+)', msg, re.I) or re.search(r'строке?\s*(\d+)', msg)
     if m_line:
         line = int(m_line.group(1))
-    m_col = re.search(r'столбец\s*(\d+)', msg) or re.search(r'col(?:umn)?\s*(\d+)', msg, re.I)
+    m_col = re.search(r'col(?:umn)?\s*(\d+)', msg, re.I) or re.search(r'столбец\s*(\d+)', msg)
     if m_col:
         col = int(m_col.group(1))
     return line, col

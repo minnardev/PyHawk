@@ -32,7 +32,7 @@ HAWK_LOGO = r"""
 def cmd_run(args):
     filepath = args.file
     if not os.path.exists(filepath):
-        print(f"Hawk Error: Файл '{filepath}' не найден!")
+        print(f"Hawk Error: File '{filepath}' not found!")
         sys.exit(1)
 
     with open(filepath, "r", encoding="utf-8") as f:
@@ -51,7 +51,7 @@ def cmd_run(args):
 def cmd_build(args):
     filepath = args.file
     if not os.path.exists(filepath):
-        print(f"Hawk Error: Файл '{filepath}' не найден!")
+        print(f"Hawk Error: File '{filepath}' not found!")
         sys.exit(1)
 
     output_path = args.output
@@ -63,13 +63,13 @@ def cmd_build(args):
         code = f.read()
 
     try:
-        print(f"🦅 Компиляция '{os.path.basename(filepath)}' в нативный бинарник...")
+        print(f"🦅 Compiling '{os.path.basename(filepath)}' to native binary...")
         tokens = Lexer(code).tokenize()
         ast = Parser(tokens).parse()
         transpiler = CTranspiler()
         bin_file = transpiler.build_native(ast, os.path.abspath(output_path))
-        print(f"✅ Успешно скомпилировано в '{bin_file}'!")
-        print(f"   Запуск: ./{os.path.basename(bin_file)}")
+        print(f"✅ Successfully compiled to '{bin_file}'!")
+        print(f"   Run: ./{os.path.basename(bin_file)}")
     except Exception as e:
         print(f"{e}")
         sys.exit(1)
@@ -78,7 +78,7 @@ def cmd_build(args):
 def cmd_emit(args):
     filepath = args.file
     if not os.path.exists(filepath):
-        print(f"Hawk Error: Файл '{filepath}' не найден!")
+        print(f"Hawk Error: File '{filepath}' not found!")
         sys.exit(1)
 
     with open(filepath, "r", encoding="utf-8") as f:
@@ -97,8 +97,8 @@ def cmd_emit(args):
 
 def cmd_repl(args):
     print(HAWK_LOGO)
-    print("Интерактивная консоль Hawk. Выход: 'exit' или Ctrl+C")
-    print("Пример: set m = [1, 2 ; 3, 4]  ->  m * m'")
+    print("Interactive Hawk Console. Exit: 'exit' or Ctrl+C")
+    print("Example: set m = [1, 2 ; 3, 4]  ->  m * m'")
     print("-" * 55)
 
     interp = Interpreter()
@@ -109,10 +109,10 @@ def cmd_repl(args):
             if not line:
                 continue
             if line in ("exit", "quit"):
-                print("До скорых встреч! 🦅")
+                print("Goodbye! 🦅")
                 break
 
-            # Если введено выражение без print/set, оборачиваем в print для REPL
+            # If an expression was typed without print/set, wrap in print for REPL
             if not (line.startswith("set ") or line.startswith("print ") or line.startswith("fn ") or
                     line.startswith("if ") or line.startswith("while ") or line.startswith("for ")):
                 test_code = f"print {line}"
@@ -124,7 +124,7 @@ def cmd_repl(args):
             interp.run(ast)
 
         except (KeyboardInterrupt, EOFError):
-            print("\nДо скорых встреч! 🦅")
+            print("\nGoodbye! 🦅")
             break
         except Exception as e:
             print(f"Hawk Error: {e}")
@@ -136,7 +136,7 @@ def cmd_check(args):
         code = sys.stdin.read()
     else:
         if not args.file or not os.path.exists(args.file):
-            print(json.dumps([{"line": 1, "col": 1, "end_col": 5, "message": f"Файл '{args.file}' не найден", "severity": "error"}]))
+            print(json.dumps([{"line": 1, "col": 1, "end_col": 5, "message": f"File '{args.file}' not found", "severity": "error"}]))
             return
         with open(args.file, "r", encoding="utf-8") as f:
             code = f.read()
@@ -148,33 +148,33 @@ def cmd_check(args):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="🦅 PyHawk Programming Language — CLI («Sharp as a hawk, fast as math»)"
+        description="🦅 PyHawk Programming Language — CLI (\"Sharp as a hawk, fast as math\")"
     )
-    subparsers = parser.add_subparsers(dest="subcommand", help="Команда для выполнения")
+    subparsers = parser.add_subparsers(dest="subcommand", help="Command to execute")
 
     # run
-    p_run = subparsers.add_parser("run", help="Запустить файл через интерпретатор")
-    p_run.add_argument("file", help="Путь к файлу .hwk")
+    p_run = subparsers.add_parser("run", help="Run Hawk file via interpreter")
+    p_run.add_argument("file", help="Path to .hwk file")
 
     # build
-    p_build = subparsers.add_parser("build", help="Скомпилировать в нативный бинарник (C99 + clang -O3)")
-    p_build.add_argument("file", help="Путь к файлу .hwk")
-    p_build.add_argument("-o", "--output", help="Имя выходного бинарника")
+    p_build = subparsers.add_parser("build", help="Compile to native binary (C99 + clang -O3)")
+    p_build.add_argument("file", help="Path to .hwk file")
+    p_build.add_argument("-o", "--output", help="Output binary path")
 
     # emit
-    p_emit = subparsers.add_parser("emit", help="Показать сгенерированный чистый код на Си")
-    p_emit.add_argument("file", help="Путь к файлу .hwk")
+    p_emit = subparsers.add_parser("emit", help="Show generated clean C code")
+    p_emit.add_argument("file", help="Path to .hwk file")
 
     # repl
-    subparsers.add_parser("repl", help="Интерактивная консоль (REPL)")
+    subparsers.add_parser("repl", help="Interactive REPL console")
 
     # check
-    p_check = subparsers.add_parser("check", help="Проверка синтаксиса и вывод диагностик в JSON")
-    p_check.add_argument("file", nargs="?", default=None, help="Путь к файлу .hwk")
-    p_check.add_argument("--stdin", action="store_true", help="Читать код из стандартного ввода")
+    p_check = subparsers.add_parser("check", help="Check syntax and output JSON diagnostics")
+    p_check.add_argument("file", nargs="?", default=None, help="Path to .hwk file")
+    p_check.add_argument("--stdin", action="store_true", help="Read code from standard input")
 
     # version
-    subparsers.add_parser("version", help="Версия Hawk")
+    subparsers.add_parser("version", help="Print Hawk version")
 
     args = parser.parse_args()
 

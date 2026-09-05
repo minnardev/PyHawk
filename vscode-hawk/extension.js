@@ -132,7 +132,7 @@ function activate(context) {
     let runDisposable = vscode.commands.registerCommand('hawk.runFile', async () => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
-            vscode.window.showWarningMessage('PyHawk: Нет открытого файла для запуска.');
+            vscode.window.showWarningMessage('PyHawk: No active file to run.');
             return;
         }
 
@@ -150,7 +150,7 @@ function activate(context) {
     let buildDisposable = vscode.commands.registerCommand('hawk.buildFile', async () => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
-            vscode.window.showWarningMessage('PyHawk: Нет открытого файла для компиляции.');
+            vscode.window.showWarningMessage('PyHawk: No active file to compile.');
             return;
         }
 

@@ -3,7 +3,7 @@
   "displayName": "PyHawk",
   "icon": "./icon.png",
   "description": "PyHawk Programming Language support with native compiler, runner & syntax linter",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "publisher": "minnardev",
   "engines": {
     "vscode": "^1.70.0"

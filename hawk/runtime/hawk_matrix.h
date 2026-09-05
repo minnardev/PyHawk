@@ -21,14 +21,14 @@ typedef struct {
 static inline Matrix* matrix_new(int rows, int cols) {
     Matrix *m = (Matrix*)malloc(sizeof(Matrix));
     if (!m) {
-        fprintf(stderr, "Hawk Error: Не удалось выделить память под Matrix!\n");
+        fprintf(stderr, "Hawk Error: Failed to allocate memory for Matrix!\n");
         exit(1);
     }
     m->rows = rows;
     m->cols = cols;
     m->data = (double*)calloc((size_t)rows * cols, sizeof(double));
     if (!m->data) {
-        fprintf(stderr, "Hawk Error: Не удалось выделить память под данные матрицы!\n");
+        fprintf(stderr, "Hawk Error: Failed to allocate memory for Matrix data!\n");
         free(m);
         exit(1);
     }
@@ -57,7 +57,7 @@ static inline void matrix_free(Matrix *m) {
 /* Получение элемента (r, c) */
 static inline double matrix_get(Matrix *m, int r, int c) {
     if (r < 0 || r >= m->rows || c < 0 || c >= m->cols) {
-        fprintf(stderr, "Hawk Error: Индекс матрицы [%d, %d] вне диапазона %dx%d!\n",
+        fprintf(stderr, "Hawk Error: Matrix index [%d, %d] out of bounds for %dx%d!\n",
                 r, c, m->rows, m->cols);
         exit(1);
     }
@@ -67,7 +67,7 @@ static inline double matrix_get(Matrix *m, int r, int c) {
 /* Установка элемента (r, c) */
 static inline void matrix_set(Matrix *m, int r, int c, double val) {
     if (r < 0 || r >= m->rows || c < 0 || c >= m->cols) {
-        fprintf(stderr, "Hawk Error: Индекс матрицы [%d, %d] вне диапазона %dx%d!\n",
+        fprintf(stderr, "Hawk Error: Matrix index [%d, %d] out of bounds for %dx%d!\n",
                 r, c, m->rows, m->cols);
         exit(1);
     }
@@ -88,7 +88,7 @@ static inline Matrix* matrix_transpose(Matrix *m) {
 /* Матричное умножение: A (RxK) * B (KxC) -> Result (RxC) */
 static inline Matrix* matrix_mult(Matrix *a, Matrix *b) {
     if (a->cols != b->rows) {
-        fprintf(stderr, "Hawk Error: Нельзя умножить матрицы размеров %dx%d и %dx%d!\n",
+        fprintf(stderr, "Hawk Error: Cannot multiply matrices of dimensions %dx%d and %dx%d!\n",
                 a->rows, a->cols, b->rows, b->cols);
         exit(1);
     }
@@ -108,7 +108,7 @@ static inline Matrix* matrix_mult(Matrix *a, Matrix *b) {
 /* Сложение матриц */
 static inline Matrix* matrix_add(Matrix *a, Matrix *b) {
     if (a->rows != b->rows || a->cols != b->cols) {
-        fprintf(stderr, "Hawk Error: Размеры матриц для сложения не совпадают!\n");
+        fprintf(stderr, "Hawk Error: Matrix dimensions do not match for addition!\n");
         exit(1);
     }
     Matrix *res = matrix_new(a->rows, a->cols);
@@ -121,7 +121,7 @@ static inline Matrix* matrix_add(Matrix *a, Matrix *b) {
 /* Вычитание матриц */
 static inline Matrix* matrix_sub(Matrix *a, Matrix *b) {
     if (a->rows != b->rows || a->cols != b->cols) {
-        fprintf(stderr, "Hawk Error: Размеры матриц для вычитания не совпадают!\n");
+        fprintf(stderr, "Hawk Error: Matrix dimensions do not match for subtraction!\n");
         exit(1);
     }
     Matrix *res = matrix_new(a->rows, a->cols);
@@ -143,7 +143,7 @@ static inline Matrix* matrix_scale(Matrix *m, double s) {
 /* Определитель квадратной матрицы (det) */
 static inline double matrix_det(Matrix *m) {
     if (m->rows != m->cols) {
-        fprintf(stderr, "Hawk Error: Определитель существует только для квадратных матриц!\n");
+        fprintf(stderr, "Hawk Error: Determinant is only defined for square matrices!\n");
         exit(1);
     }
     int n = m->rows;
@@ -246,6 +246,19 @@ static inline double hawk_input_num(const char *prompt) {
         val = 0.0;
     }
     return val;
+}
+
+/* Python-style modulo for doubles */
+static inline double hawk_mod(double a, double b) {
+    if (b == 0.0) {
+        fprintf(stderr, "Hawk Error: Division or modulo by zero!\n");
+        exit(1);
+    }
+    double m = fmod(a, b);
+    if ((m < 0.0 && b > 0.0) || (m > 0.0 && b < 0.0)) {
+        m += b;
+    }
+    return m;
 }
 
 #endif /* HAWK_MATRIX_H */

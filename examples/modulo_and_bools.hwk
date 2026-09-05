@@ -1,0 +1,35 @@
+# 🦅 PyHawk — Modulo (%) & Booleans (true/false) Demo
+
+# 1. Modulo operator (%)
+set a = 10
+set b = 3
+set rem = a % b
+print "10 % 3 =", rem
+
+# 2. Comparison operators <= and >= in loops
+set d = 1
+set n = 5
+print "Counting with while (d <= n):"
+while (d <= n) {
+    print "  d =", d
+    set d = d + 1
+}
+
+# 3. Boolean literals true / false & expressions
+set flag_true = true
+set flag_false = false
+set is_one = (rem = 1)
+print "Literals:", flag_true, flag_false
+print "Expression (rem = 1):", is_one
+
+# 4. Functions returning booleans
+fn is_even(x) {
+    return (x % 2 = 0)
+}
+
+print "is_even(4) =", is_even(4)
+print "is_even(7) =", is_even(7)
+
+if (is_even(4) and not is_even(7)) {
+    print "Math logic works perfectly! 🦅"
+}

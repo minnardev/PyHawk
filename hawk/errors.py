@@ -11,7 +11,7 @@ class HawkError(Exception):
         self.line = line
         self.col = col
         self.end_col = end_col or (col + 1)
-        super().__init__(f"Hawk Error (строка {line}, столбец {col}): {message}")
+        super().__init__(f"Hawk Error (line {line}, column {col}): {message}")
 
 
 class HawkSyntaxError(HawkError, SyntaxError):

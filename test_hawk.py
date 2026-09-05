@@ -70,7 +70,39 @@ class TestHawk(unittest.TestCase):
         with self.assertRaises(SyntaxError) as ctx:
             tokens = Lexer(code).tokenize()
             Parser(tokens).parse()
-        self.assertIn("требует ключевое слово 'set'", str(ctx.exception))
+        self.assertIn("requires 'set' keyword", str(ctx.exception))
+
+    def test_modulo_operator(self):
+        code = """
+        print 10 % 3
+        print 7 % 3
+        set x = 14 % 5
+        print x
+        """
+        out = self.run_hawk(code)
+        self.assertEqual(out, ["1", "1", "4"])
+
+    def test_booleans_and_comparisons(self):
+        code = """
+        set t = true
+        set f = false
+        print t, f
+
+        set x = 10
+        set is_ten = (x = 10)
+        set is_less = (x <= 15)
+        set is_greater = (x >= 20)
+        print is_ten, is_less, is_greater
+
+        fn is_even(n) {
+            return (n % 2 = 0)
+        }
+        print is_even(4), is_even(7)
+        """
+        out = self.run_hawk(code)
+        self.assertEqual(out[0], "true false")
+        self.assertEqual(out[1], "true true false")
+        self.assertEqual(out[2], "true false")
 
     def test_matrix_operations(self):
         code = """
@@ -131,10 +163,18 @@ class TestHawk(unittest.TestCase):
 
         set m = [1, 2 ; 3, 4]
         print "det:", det(m)
+
+        set mod_val = 10 % 3
+        print "mod:", mod_val
+
+        set flag = true
+        print "flag:", flag
         """
         out = self.build_and_run_native(code)
         self.assertTrue(any("Гипотенуза: 5" in line for line in out))
         self.assertTrue(any("det: -2" in line for line in out))
+        self.assertTrue(any("mod: 1" in line for line in out))
+        self.assertTrue(any("flag: true" in line for line in out))
 
 
 if __name__ == "__main__":

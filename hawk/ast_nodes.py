@@ -33,6 +33,13 @@ class StringExpr(Expr):
 
 
 @dataclass
+class BoolExpr(Expr):
+    value: bool
+    line: int = 1
+    col: int = 1
+
+
+@dataclass
 class VarExpr(Expr):
     name: str
     line: int = 1

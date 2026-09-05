@@ -107,7 +107,7 @@
         },
         {
           "name": "keyword.operator.arithmetic.hawk",
-          "match": "(\\+|-|\\*|/|\\^|')"
+          "match": "(\\+|-|\\*|/|%|\\^|')"
         }
       ]
     },

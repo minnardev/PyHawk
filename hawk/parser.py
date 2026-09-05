@@ -8,7 +8,7 @@ from hawk.errors import HawkSyntaxError
 from hawk.ast_nodes import (
     Stmt, Expr, SetStmt, IndexAssignStmt, PrintStmt, IfStmt, WhileStmt, ForStmt,
     FnDef, ReturnStmt, ExprStmt,
-    NumberExpr, StringExpr, VarExpr, MatrixLiteral, MatrixIndexExpr,
+    NumberExpr, StringExpr, BoolExpr, VarExpr, MatrixLiteral, MatrixIndexExpr,
     TransposeExpr, BinOpExpr, UnaryOpExpr, CallExpr
 )
 
@@ -41,7 +41,7 @@ class Parser:
         if tok.type == type_:
             return self.advance()
         val_len = len(str(tok.value)) if tok.value else 1
-        msg = error_msg or f"Ожидался токен {type_.name}, а получен {tok.type.name} ('{tok.value}')"
+        msg = error_msg or f"Expected token {type_.name}, got {tok.type.name} ('{tok.value}')"
         raise HawkSyntaxError(msg, line=tok.line, col=tok.col, end_col=tok.col + val_len)
 
     def skip_newlines(self):
@@ -104,7 +104,7 @@ class Parser:
                 return self.parse_index_assign()
             elif next_tok.type == TokenType.EQ:
                 raise HawkSyntaxError(
-                    f"Присваивание переменной требует ключевое слово 'set'. Напишите: 'set {tok.value} = ...'",
+                    f"Variable assignment requires 'set' keyword. Did you mean: 'set {tok.value} = ...'?",
                     line=tok.line,
                     col=tok.col,
                     end_col=next_tok.col + 1
@@ -116,14 +116,14 @@ class Parser:
 
     def parse_set_stmt(self) -> SetStmt:
         start_tok = self.expect(TokenType.SET)
-        name_tok = self.expect(TokenType.ID, "Ожидалось имя переменной после 'set'")
+        name_tok = self.expect(TokenType.ID, "Expected variable name after 'set'")
         type_annot = None
 
         if self.match(TokenType.COLON):
-            type_tok = self.expect(TokenType.ID, "Ожидался тип после ':'")
+            type_tok = self.expect(TokenType.ID, "Expected type after ':'")
             type_annot = type_tok.value
 
-        self.expect(TokenType.EQ, "Ожидался знак '=' после имени переменной в 'set'")
+        self.expect(TokenType.EQ, "Expected '=' after variable name in 'set'")
         val_expr = self.parse_expr()
         return SetStmt(name=name_tok.value, type_annotation=type_annot, value=val_expr,
                        line=start_tok.line, col=start_tok.col)
@@ -160,19 +160,19 @@ class Parser:
 
     def parse_fn_def(self) -> FnDef:
         start_tok = self.expect(TokenType.FN)
-        name_tok = self.expect(TokenType.ID, "Ожидалось имя функции после 'fn'")
-        self.expect(TokenType.LPAREN, "Ожидалась '(' после имени функции")
+        name_tok = self.expect(TokenType.ID, "Expected function name after 'fn'")
+        self.expect(TokenType.LPAREN, "Expected '(' after function name")
         params: List[str] = []
 
         if self.peek().type != TokenType.RPAREN:
-            p_tok = self.expect(TokenType.ID, "Ожидалось имя параметра")
+            p_tok = self.expect(TokenType.ID, "Expected parameter name")
             params.append(p_tok.value)
             while self.match(TokenType.COMMA):
-                p_tok = self.expect(TokenType.ID, "Ожидалось имя параметра")
+                p_tok = self.expect(TokenType.ID, "Expected parameter name")
                 params.append(p_tok.value)
 
         self.expect(TokenType.RPAREN)
-        self.expect(TokenType.LBRACE, "Ожидалась '{' перед телом функции")
+        self.expect(TokenType.LBRACE, "Expected '{' before function body")
         body = self.parse_block()
         return FnDef(name=name_tok.value, params=params, body=body, line=start_tok.line, col=start_tok.col)
 
@@ -185,16 +185,16 @@ class Parser:
 
     def parse_if_stmt(self) -> IfStmt:
         start_tok = self.expect(TokenType.IF)
-        self.expect(TokenType.LPAREN, "Ожидалась '(' после 'if'")
+        self.expect(TokenType.LPAREN, "Expected '(' after 'if'")
         cond = self.parse_expr()
-        self.expect(TokenType.RPAREN, "Ожидалась ')' после условия 'if'")
-        self.expect(TokenType.LBRACE, "Ожидалась '{' перед телом 'if'")
+        self.expect(TokenType.RPAREN, "Expected ')' after 'if' condition")
+        self.expect(TokenType.LBRACE, "Expected '{' before 'if' body")
         then_body = self.parse_block()
         else_body: List[Stmt] = []
 
         self.skip_newlines()
         if self.match(TokenType.ELSE):
-            self.expect(TokenType.LBRACE, "Ожидалась '{' перед телом 'else'")
+            self.expect(TokenType.LBRACE, "Expected '{' before 'else' body")
             else_body = self.parse_block()
 
         return IfStmt(condition=cond, then_body=then_body, else_body=else_body,
@@ -202,10 +202,10 @@ class Parser:
 
     def parse_while_stmt(self) -> WhileStmt:
         start_tok = self.expect(TokenType.WHILE)
-        self.expect(TokenType.LPAREN, "Ожидалась '(' после 'while'")
+        self.expect(TokenType.LPAREN, "Expected '(' after 'while'")
         cond = self.parse_expr()
-        self.expect(TokenType.RPAREN, "Ожидалась ')' после условия 'while'")
-        self.expect(TokenType.LBRACE, "Ожидалась '{' перед телом 'while'")
+        self.expect(TokenType.RPAREN, "Expected ')' after 'while' condition")
+        self.expect(TokenType.LBRACE, "Expected '{' before 'while' body")
         body = self.parse_block()
         return WhileStmt(condition=cond, body=body, line=start_tok.line, col=start_tok.col)
 
@@ -231,7 +231,7 @@ class Parser:
             if stmt:
                 stmts.append(stmt)
             self.skip_newlines()
-        self.expect(TokenType.RBRACE, "Ожидалась '}' в конце блока")
+        self.expect(TokenType.RBRACE, "Expected '}' at the end of block")
         return stmts
 
     # --- Выражения (Expressions) ---
@@ -297,8 +297,8 @@ class Parser:
         left = self.parse_power()
 
         while True:
-            # Явное умножение / деление
-            if self.peek().type in (TokenType.STAR, TokenType.SLASH):
+            # Явное умножение / деление / остаток (%)
+            if self.peek().type in (TokenType.STAR, TokenType.SLASH, TokenType.PERCENT):
                 op_tok = self.advance()
                 right = self.parse_power()
                 left = BinOpExpr(op=op_tok.value, left=left, right=right, line=left.line, col=left.col)
@@ -353,7 +353,7 @@ class Parser:
                 c_expr = None
                 if self.match(TokenType.COMMA):
                     c_expr = self.parse_expr()
-                self.expect(TokenType.RBRACKET, "Ожидалась ']' после индекса матрицы")
+                self.expect(TokenType.RBRACKET, "Expected ']' after matrix index")
                 node = MatrixIndexExpr(matrix=node, row=r_expr, column=c_expr, line=node.line, src_col=getattr(node, "src_col", getattr(node, "col", 1)))
                 continue
 
@@ -364,11 +364,11 @@ class Parser:
                     args.append(self.parse_expr())
                     while self.match(TokenType.COMMA):
                         args.append(self.parse_expr())
-                self.expect(TokenType.RPAREN, "Ожидалась ')' после аргументов функции")
+                self.expect(TokenType.RPAREN, "Expected ')' after function arguments")
                 if isinstance(node, VarExpr):
                     node = CallExpr(callee=node.name, args=args, line=node.line, col=node.col)
                 else:
-                    raise SyntaxError(f"Hawk Error: Вызов допустим только для функций (строка {node.line})")
+                    raise HawkSyntaxError(f"Call expression is only valid on functions (line {node.line})", line=node.line, col=node.col)
                 continue
 
             break
@@ -386,6 +386,12 @@ class Parser:
         if self.match(TokenType.STRING):
             return StringExpr(value=tok.value, line=tok.line, col=tok.col)
 
+        # Булевы значения true / false
+        if self.match(TokenType.TRUE):
+            return BoolExpr(value=True, line=tok.line, col=tok.col)
+        if self.match(TokenType.FALSE):
+            return BoolExpr(value=False, line=tok.line, col=tok.col)
+
         # Идентификатор / Переменная
         if self.match(TokenType.ID):
             return VarExpr(name=tok.value, line=tok.line, col=tok.col)
@@ -393,7 +399,7 @@ class Parser:
         # Выражение в скобках (expr)
         if self.match(TokenType.LPAREN):
             expr = self.parse_expr()
-            self.expect(TokenType.RPAREN, "Ожидалась ')'")
+            self.expect(TokenType.RPAREN, "Expected ')'")
             return expr
 
         # Литерал матрицы [1, 2 ; 3, 4]
@@ -401,7 +407,7 @@ class Parser:
             return self.parse_matrix_literal(tok)
 
         val_len = len(str(tok.value)) if tok.value else 1
-        raise HawkSyntaxError(f"Неожиданный токен {tok.type.name} ('{tok.value}')", line=tok.line, col=tok.col, end_col=tok.col + val_len)
+        raise HawkSyntaxError(f"Unexpected token {tok.type.name} ('{tok.value}')", line=tok.line, col=tok.col, end_col=tok.col + val_len)
 
     def parse_matrix_literal(self, start_tok: Token) -> MatrixLiteral:
         rows: List[List[Expr]] = []
@@ -431,5 +437,5 @@ class Parser:
         if curr_row:
             rows.append(curr_row)
 
-        self.expect(TokenType.RBRACKET, "Ожидалась ']' в конце матрицы")
+        self.expect(TokenType.RBRACKET, "Expected ']' at the end of matrix")
         return MatrixLiteral(rows=rows, line=start_tok.line, col=start_tok.col)

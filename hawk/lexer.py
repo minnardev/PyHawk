@@ -12,6 +12,8 @@ class TokenType(Enum):
     NUMBER = auto()
     STRING = auto()
     ID = auto()
+    TRUE = auto()
+    FALSE = auto()
 
     # Ключевые слова
     SET = auto()
@@ -40,6 +42,7 @@ class TokenType(Enum):
     MINUS = auto()       # -
     STAR = auto()        # *
     SLASH = auto()       # /
+    PERCENT = auto()     # % (остаток от деления)
     CARET = auto()       # ^ (степень)
     PRIME = auto()       # ' (транспонирование)
 
@@ -81,6 +84,8 @@ KEYWORDS = {
     "and": TokenType.AND,
     "or": TokenType.OR,
     "not": TokenType.NOT,
+    "true": TokenType.TRUE,
+    "false": TokenType.FALSE,
 }
 
 
@@ -170,7 +175,7 @@ class Lexer:
                     else:
                         s_chars.append(self.advance())
                 if self.pos >= len(self.code) or self.peek() != '"':
-                    raise HawkSyntaxError("Незакрытая строка (пропущена закрывающая кавычка '\"')", line=start_line, col=start_col, end_col=self.col)
+                    raise HawkSyntaxError("Unterminated string literal (missing closing quote '\"')", line=start_line, col=start_col, end_col=self.col)
                 self.advance()
                 tokens.append(Token(TokenType.STRING, "".join(s_chars), start_line, start_col))
                 continue
@@ -222,6 +227,9 @@ class Lexer:
             elif ch == "/":
                 self.advance()
                 tokens.append(Token(TokenType.SLASH, "/", start_line, start_col))
+            elif ch == "%":
+                self.advance()
+                tokens.append(Token(TokenType.PERCENT, "%", start_line, start_col))
             elif ch == "^":
                 self.advance()
                 tokens.append(Token(TokenType.CARET, "^", start_line, start_col))
@@ -261,7 +269,7 @@ class Lexer:
                 tokens.append(Token(TokenType.SEMICOLON, ";", start_line, start_col))
             else:
                 bad_char = self.advance()
-                raise HawkSyntaxError(f"Неизвестный символ '{bad_char}'", line=start_line, col=start_col, end_col=start_col + 1)
+                raise HawkSyntaxError(f"Unexpected character '{bad_char}'", line=start_line, col=start_col, end_col=start_col + 1)
 
         # Завершающий токен
         if not tokens or tokens[-1].type != TokenType.NEWLINE:
