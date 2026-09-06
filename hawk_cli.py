@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-🦅 PyHawk Programming Language — CLI
+PyHawk Programming Language — CLI
 «Sharp as a hawk, fast as math»
 """
 
@@ -25,7 +25,7 @@ HAWK_LOGO = r"""
     |       ||       ||       ||     |_ 
     |   _   ||   _   ||   _   ||    _  |
     |__| |__||__| |__||__| |__||___| |_|
-   🦅 PyHawk — Sharp as a hawk, fast as math (v0.1)
+   PyHawk — Sharp as a hawk, fast as math (v0.1)
 """
 
 
@@ -63,12 +63,12 @@ def cmd_build(args):
         code = f.read()
 
     try:
-        print(f"🦅 Compiling '{os.path.basename(filepath)}' to native binary...")
+        print(f"Compiling '{os.path.basename(filepath)}' to native binary...")
         tokens = Lexer(code).tokenize()
         ast = Parser(tokens).parse()
         transpiler = CTranspiler()
         bin_file = transpiler.build_native(ast, os.path.abspath(output_path))
-        print(f"✅ Successfully compiled to '{bin_file}'!")
+        print(f"Successfully compiled to '{bin_file}'!")
         print(f"   Run: ./{os.path.basename(bin_file)}")
     except Exception as e:
         print(f"{e}")
@@ -105,11 +105,11 @@ def cmd_repl(args):
 
     while True:
         try:
-            line = input("🦅 hawk> ").strip()
+            line = input("hawk> ").strip()
             if not line:
                 continue
             if line in ("exit", "quit"):
-                print("Goodbye! 🦅")
+                print("Goodbye!")
                 break
 
             # If an expression was typed without print/set, wrap in print for REPL
@@ -124,7 +124,7 @@ def cmd_repl(args):
             interp.run(ast)
 
         except (KeyboardInterrupt, EOFError):
-            print("\nGoodbye! 🦅")
+            print("\nGoodbye!")
             break
         except Exception as e:
             print(f"Hawk Error: {e}")
@@ -162,14 +162,14 @@ def cmd_format(args):
         if args.write:
             with open(args.file, "w", encoding="utf-8") as f:
                 f.write(formatted)
-            print(f"✨ Formatted '{args.file}'")
+            print(f"Formatted '{args.file}'")
         else:
             sys.stdout.write(formatted)
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="🦅 PyHawk Programming Language — CLI (\"Sharp as a hawk, fast as math\")"
+        description="PyHawk Programming Language — CLI (\"Sharp as a hawk, fast as math\")"
     )
     subparsers = parser.add_subparsers(dest="subcommand", help="Command to execute")
 
@@ -218,7 +218,7 @@ def main():
     elif args.subcommand == "format":
         cmd_format(args)
     elif args.subcommand == "version":
-        print("🦅 PyHawk v0.1")
+        print("PyHawk v0.1")
     else:
         parser.print_help()
 
