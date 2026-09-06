@@ -1,14 +1,14 @@
 """
-🦅 Hawk Programming Language — C Transpiler & Compiler
+Hawk Programming Language — C Transpiler & Compiler
 Генерирует чистый, понятный Си-код и компилирует его через clang/gcc.
 """
 
 import os
 import subprocess
-from typing import List, Dict, Tuple, Optional, Any
+from typing import List, Dict, Tuple, Optional, Any, Set
 from hawk.ast_nodes import (
     Stmt, Expr, SetStmt, IndexAssignStmt, PrintStmt, IfStmt, WhileStmt, ForStmt,
-    FnDef, ReturnStmt, ExprStmt,
+    FnDef, ReturnStmt, ExprStmt, ImportStmt,
     NumberExpr, StringExpr, BoolExpr, VarExpr, MatrixLiteral, MatrixIndexExpr,
     TransposeExpr, BinOpExpr, UnaryOpExpr, CallExpr
 )
@@ -27,7 +27,53 @@ class CTranspiler:
             os.path.dirname(os.path.abspath(__file__)), "runtime", "hawk_matrix.h"
         )
 
-    def transpile(self, stmts: List[Stmt]) -> str:
+    def resolve_imports(self, stmts: List[Stmt], current_file: Optional[str] = None, visited: Optional[Set[str]] = None) -> List[Stmt]:
+        if visited is None:
+            visited = set()
+            if current_file:
+                visited.add(os.path.realpath(current_file))
+
+        base_dir = os.path.dirname(current_file) if current_file else os.getcwd()
+        expanded_stmts: List[Stmt] = []
+
+        for s in stmts:
+            if isinstance(s, ImportStmt):
+                raw_path = s.module_path
+                candidate = os.path.normpath(os.path.join(base_dir, raw_path))
+                if not os.path.exists(candidate) and not raw_path.endswith(".hwk"):
+                    candidate_hwk = candidate + ".hwk"
+                    if os.path.exists(candidate_hwk):
+                        candidate = candidate_hwk
+
+                if not os.path.exists(candidate):
+                    raise FileNotFoundError(
+                        f"Hawk Error: Cannot import '{raw_path}' (looked at '{candidate}'). File not found!"
+                    )
+
+                real_path = os.path.realpath(candidate)
+                if real_path in visited:
+                    continue
+                visited.add(real_path)
+
+                with open(real_path, "r", encoding="utf-8") as f:
+                    code = f.read()
+
+                from hawk.lexer import Lexer
+                from hawk.parser import Parser
+                tokens = Lexer(code).tokenize()
+                imported_ast = Parser(tokens).parse()
+
+                # Recursively resolve any nested imports
+                sub_expanded = self.resolve_imports(imported_ast, real_path, visited)
+                expanded_stmts.extend(sub_expanded)
+            else:
+                expanded_stmts.append(s)
+
+        return expanded_stmts
+
+    def transpile(self, stmts: List[Stmt], current_file: Optional[str] = None) -> str:
+        stmts = self.resolve_imports(stmts, current_file)
+
         # 1. Collect functions and variables
         fn_nodes: List[FnDef] = []
         main_stmts: List[Stmt] = []
@@ -419,8 +465,8 @@ class CTranspiler:
 
         return ("0.0", "double")
 
-    def build_native(self, stmts: List[Stmt], output_binary_path: str) -> str:
-        c_code = self.transpile(stmts)
+    def build_native(self, stmts: List[Stmt], output_binary_path: str, current_file: Optional[str] = None) -> str:
+        c_code = self.transpile(stmts, current_file)
         c_temp_file = output_binary_path + ".c"
         with open(c_temp_file, "w", encoding="utf-8") as f:
             f.write(c_code)

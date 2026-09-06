@@ -1,0 +1,8 @@
+# Демонстрация импорта модулей (import) в PyHawk
+
+import "helpers.hwk"
+
+set num = 5
+print "Квадрат", num, "=", square(num)
+print "Куб", num, "=", cube(num)
+print "Число * DEFAULT_MULTIPLIER =", num * DEFAULT_MULTIPLIER

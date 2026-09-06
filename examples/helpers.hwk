@@ -1,0 +1,11 @@
+# Модуль вспомогательных функций и констант
+
+fn square(x) {
+    return x^2
+}
+
+fn cube(x) {
+    return x^3
+}
+
+set DEFAULT_MULTIPLIER = 10

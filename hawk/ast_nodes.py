@@ -1,5 +1,5 @@
 """
-🦅 Hawk Programming Language — AST Nodes
+Hawk Programming Language — AST Nodes
 """
 
 from dataclasses import dataclass
@@ -176,5 +176,12 @@ class ReturnStmt(Stmt):
 @dataclass
 class ExprStmt(Stmt):
     expr: Expr
+    line: int = 1
+    col: int = 1
+
+
+@dataclass
+class ImportStmt(Stmt):
+    module_path: str
     line: int = 1
     col: int = 1

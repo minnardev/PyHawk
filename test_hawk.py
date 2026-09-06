@@ -213,6 +213,84 @@ set a = input("Enter: ")
         out = self.build_and_run_native(code)
         self.assertEqual(out, ["15"])
 
+    def test_import_multi_file(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmpdir:
+            helper_path = os.path.join(tmpdir, "helpers.hwk")
+            with open(helper_path, "w", encoding="utf-8") as f:
+                f.write("""
+                fn calc_double(x) {
+                    return 2x
+                }
+                set CONST_OFFSET = 100
+                """)
+
+            main_path = os.path.join(tmpdir, "main.hwk")
+            with open(main_path, "w", encoding="utf-8") as f:
+                f.write("""
+                import "helpers.hwk"
+                set res = calc_double(21) + CONST_OFFSET
+                print res
+                """)
+
+            # 1. Test Interpreter
+            with open(main_path, "r", encoding="utf-8") as f:
+                code_main = f.read()
+            tokens = Lexer(code_main).tokenize()
+            ast = Parser(tokens).parse()
+            output = []
+            interp = Interpreter(print_func=lambda *args: output.append(" ".join(str(a) for a in args)),
+                                 current_file=main_path)
+            interp.run(ast)
+            self.assertEqual(output, ["142"])
+
+            # 2. Test Native Compilation
+            transpiler = CTranspiler()
+            bin_path = os.path.join(tmpdir, "main_bin")
+            transpiler.build_native(ast, bin_path, current_file=main_path)
+            res = subprocess.run([bin_path], capture_output=True, text=True)
+            self.assertEqual(res.returncode, 0)
+            self.assertEqual(res.stdout.strip(), "142")
+
+    def test_circular_and_identifier_import(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmpdir:
+            file_b = os.path.join(tmpdir, "module_b.hwk")
+            file_a = os.path.join(tmpdir, "module_a.hwk")
+
+            with open(file_b, "w", encoding="utf-8") as f:
+                f.write("""
+                import module_a
+                fn func_b() {
+                    return 42
+                }
+                """)
+
+            with open(file_a, "w", encoding="utf-8") as f:
+                f.write("""
+                import module_b
+                print func_b()
+                """)
+
+            # Test interpreter doesn't crash in circular import and identifier syntax works
+            with open(file_a, "r", encoding="utf-8") as f:
+                code_a = f.read()
+            tokens = Lexer(code_a).tokenize()
+            ast = Parser(tokens).parse()
+            output = []
+            interp = Interpreter(print_func=lambda *args: output.append(" ".join(str(a) for a in args)),
+                                 current_file=file_a)
+            interp.run(ast)
+            self.assertEqual(output, ["42"])
+
+            # Test native compiler
+            transpiler = CTranspiler()
+            bin_path = os.path.join(tmpdir, "circ_bin")
+            transpiler.build_native(ast, bin_path, current_file=file_a)
+            res = subprocess.run([bin_path], capture_output=True, text=True)
+            self.assertEqual(res.returncode, 0)
+            self.assertEqual(res.stdout.strip(), "42")
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -41,7 +41,7 @@ def cmd_run(args):
     try:
         tokens = Lexer(code).tokenize()
         ast = Parser(tokens).parse()
-        interp = Interpreter()
+        interp = Interpreter(current_file=os.path.abspath(filepath))
         interp.run(ast)
     except Exception as e:
         print(f"{e}")
@@ -67,7 +67,7 @@ def cmd_build(args):
         tokens = Lexer(code).tokenize()
         ast = Parser(tokens).parse()
         transpiler = CTranspiler()
-        bin_file = transpiler.build_native(ast, os.path.abspath(output_path))
+        bin_file = transpiler.build_native(ast, os.path.abspath(output_path), current_file=os.path.abspath(filepath))
         print(f"Successfully compiled to '{bin_file}'!")
         print(f"   Run: ./{os.path.basename(bin_file)}")
     except Exception as e:
@@ -88,7 +88,7 @@ def cmd_emit(args):
         tokens = Lexer(code).tokenize()
         ast = Parser(tokens).parse()
         transpiler = CTranspiler()
-        c_code = transpiler.transpile(ast)
+        c_code = transpiler.transpile(ast, current_file=os.path.abspath(filepath))
         print(c_code)
     except Exception as e:
         print(f"{e}")

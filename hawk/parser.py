@@ -1,5 +1,5 @@
 """
-🦅 Hawk Programming Language — Parser (Синтаксический анализатор)
+Hawk Programming Language — Parser (Синтаксический анализатор)
 """
 
 from typing import List, Optional
@@ -7,7 +7,7 @@ from hawk.lexer import Token, TokenType
 from hawk.errors import HawkSyntaxError
 from hawk.ast_nodes import (
     Stmt, Expr, SetStmt, IndexAssignStmt, PrintStmt, IfStmt, WhileStmt, ForStmt,
-    FnDef, ReturnStmt, ExprStmt,
+    FnDef, ReturnStmt, ExprStmt, ImportStmt,
     NumberExpr, StringExpr, BoolExpr, VarExpr, MatrixLiteral, MatrixIndexExpr,
     TransposeExpr, BinOpExpr, UnaryOpExpr, CallExpr
 )
@@ -95,7 +95,11 @@ class Parser:
         if tok.type == TokenType.FOR:
             return self.parse_for_stmt()
 
-        # 8. Проверка на ошибочное голое присваивание без set: x = 5
+        # 8. import "file.hwk" or import file
+        if tok.type == TokenType.IMPORT:
+            return self.parse_import_stmt()
+
+        # 9. Проверка на ошибочное голое присваивание без set: x = 5
         if tok.type == TokenType.ID:
             next_tok = self.peek(1)
             # m[r, c] = val
@@ -113,6 +117,22 @@ class Parser:
         # Выражение как инструкция (например вызов функции)
         expr = self.parse_expr()
         return ExprStmt(expr, line=tok.line, col=tok.col)
+
+    def parse_import_stmt(self) -> ImportStmt:
+        start_tok = self.expect(TokenType.IMPORT)
+        tok = self.peek()
+        if tok.type == TokenType.STRING:
+            path = self.advance().value
+        elif tok.type == TokenType.ID:
+            path = self.advance().value
+        else:
+            raise HawkSyntaxError(
+                "Expected file path string or module name after 'import', e.g. import \"utils.hwk\" or import utils",
+                line=tok.line,
+                col=tok.col,
+                end_col=tok.col + len(str(tok.value or ""))
+            )
+        return ImportStmt(module_path=path, line=start_tok.line, col=start_tok.col)
 
     def parse_set_stmt(self) -> SetStmt:
         start_tok = self.expect(TokenType.SET)

@@ -2,11 +2,12 @@
 🦅 Hawk Programming Language — Interpreter (Прямой рантайм на Python)
 """
 
+import os
 import math
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 from hawk.ast_nodes import (
     Stmt, Expr, SetStmt, IndexAssignStmt, PrintStmt, IfStmt, WhileStmt, ForStmt,
-    FnDef, ReturnStmt, ExprStmt,
+    FnDef, ReturnStmt, ExprStmt, ImportStmt,
     NumberExpr, StringExpr, BoolExpr, VarExpr, MatrixLiteral, MatrixIndexExpr,
     TransposeExpr, BinOpExpr, UnaryOpExpr, CallExpr
 )
@@ -121,7 +122,7 @@ class Environment:
             return self.vars[name]
         if self.parent:
             return self.parent.get(name)
-        raise NameError(f"Hawk NameError: Variable '{name}' not found!")
+        raise NameError(f"Hawk NameError: Undefined variable '{name}'")
 
     def set(self, name: str, val: Any):
         curr = self
@@ -142,9 +143,13 @@ class Environment:
 
 
 class Interpreter:
-    def __init__(self, print_func=print, input_func=input):
+    def __init__(self, print_func=print, input_func=input, current_file: Optional[str] = None):
         self.print_func = print_func
         self.input_func = input_func
+        self.current_file = os.path.abspath(current_file) if current_file else None
+        self.imported_files: Set[str] = set()
+        if self.current_file:
+            self.imported_files.add(os.path.realpath(self.current_file))
         self.globals = Environment()
         self.functions: Dict[str, FnDef] = {}
         self._init_builtins()
@@ -228,6 +233,46 @@ class Interpreter:
         if isinstance(stmt, ExprStmt):
             return self.eval_expr(stmt.expr, env)
 
+        if isinstance(stmt, ImportStmt):
+            return self.exec_import(stmt, env)
+
+        return None
+
+    def exec_import(self, stmt: ImportStmt, env: Environment) -> Any:
+        base_dir = os.path.dirname(self.current_file) if self.current_file else os.getcwd()
+        raw_path = stmt.module_path
+
+        candidate = os.path.normpath(os.path.join(base_dir, raw_path))
+        if not os.path.exists(candidate) and not raw_path.endswith(".hwk"):
+            candidate_hwk = candidate + ".hwk"
+            if os.path.exists(candidate_hwk):
+                candidate = candidate_hwk
+
+        if not os.path.exists(candidate):
+            raise FileNotFoundError(
+                f"Hawk Error: Cannot import '{raw_path}' (looked at '{candidate}'). File not found!"
+            )
+
+        real_path = os.path.realpath(candidate)
+        if real_path in self.imported_files:
+            return None
+
+        self.imported_files.add(real_path)
+
+        with open(real_path, "r", encoding="utf-8") as f:
+            code = f.read()
+
+        from hawk.lexer import Lexer
+        from hawk.parser import Parser
+        tokens = Lexer(code).tokenize()
+        imported_ast = Parser(tokens).parse()
+
+        prev_file = self.current_file
+        self.current_file = real_path
+        try:
+            self.exec_block(imported_ast, env)
+        finally:
+            self.current_file = prev_file
         return None
 
     def eval_expr(self, expr: Expr, env: Environment) -> Any:
