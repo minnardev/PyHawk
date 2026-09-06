@@ -4,10 +4,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include <math.h>
 
 /*
- * 🦅 Hawk Matrix Runtime
+ * Hawk Matrix Runtime
  * Структура матрицы: плоский массив размером rows * cols
  * Индекс элемента (r, c) вычисляется как: r * cols + c
  */
@@ -217,22 +218,268 @@ static inline void matrix_print(Matrix *m) {
     printf("]\n");
 }
 
+/* ==============================================================================
+ * Math, String & Value Helpers
+ * ============================================================================== */
+
+/* Python-style modulo for doubles */
+static inline double hawk_mod(double a, double b) {
+    if (b == 0.0) {
+        fprintf(stderr, "Hawk Error: Division or modulo by zero!\n");
+        exit(1);
+    }
+    double m = fmod(a, b);
+    if ((m < 0.0 && b > 0.0) || (m > 0.0 && b < 0.0)) {
+        m += b;
+    }
+    return m;
+}
+
+static inline bool hawk_str_eq(const char *s1, const char *s2) {
+    if (s1 == s2) return true;
+    if (!s1 || !s2) return false;
+    return strcmp(s1, s2) == 0;
+}
+
+static inline const char* hawk_str_concat(const char *s1, const char *s2) {
+    if (!s1) s1 = "";
+    if (!s2) s2 = "";
+    size_t len = strlen(s1) + strlen(s2) + 1;
+    char *res = (char*)malloc(len);
+    if (!res) return "";
+    snprintf(res, len, "%s%s", s1, s2);
+    return res;
+}
+
+static inline const char* hawk_num_to_str(double n) {
+    char *buf = (char*)malloc(64);
+    if (!buf) return "";
+    if (n == (long)n) {
+        snprintf(buf, 64, "%ld", (long)n);
+    } else {
+        snprintf(buf, 64, "%g", n);
+    }
+    return buf;
+}
+
+static inline const char* hawk_bool_to_str(bool b) {
+    return b ? "true" : "false";
+}
+
+/* ==============================================================================
+ * HawkVal Dynamic Value System
+ * ============================================================================== */
+
+typedef enum {
+    HAWK_VAL_NUM,
+    HAWK_VAL_STR,
+    HAWK_VAL_BOOL,
+    HAWK_VAL_MATRIX
+} HawkValType;
+
+typedef struct {
+    HawkValType type;
+    double num;
+    char *str;
+    bool boolean;
+    Matrix *mat;
+} HawkVal;
+
+static inline HawkVal hawk_val_num(double n) {
+    HawkVal v;
+    memset(&v, 0, sizeof(HawkVal));
+    v.type = HAWK_VAL_NUM;
+    v.num = n;
+    return v;
+}
+
+static inline HawkVal hawk_val_str(const char *s) {
+    HawkVal v;
+    memset(&v, 0, sizeof(HawkVal));
+    v.type = HAWK_VAL_STR;
+    v.str = s ? strdup(s) : strdup("");
+    return v;
+}
+
+static inline HawkVal hawk_val_bool(bool b) {
+    HawkVal v;
+    memset(&v, 0, sizeof(HawkVal));
+    v.type = HAWK_VAL_BOOL;
+    v.boolean = b;
+    return v;
+}
+
+static inline HawkVal hawk_val_matrix(Matrix *m) {
+    HawkVal v;
+    memset(&v, 0, sizeof(HawkVal));
+    v.type = HAWK_VAL_MATRIX;
+    v.mat = m;
+    return v;
+}
+
+static inline double hawk_val_to_num(HawkVal v) {
+    if (v.type == HAWK_VAL_NUM) return v.num;
+    if (v.type == HAWK_VAL_STR && v.str) {
+        char *endptr = NULL;
+        return strtod(v.str, &endptr);
+    }
+    if (v.type == HAWK_VAL_BOOL) return v.boolean ? 1.0 : 0.0;
+    return 0.0;
+}
+
+static inline const char* hawk_val_to_str(HawkVal v) {
+    if (v.type == HAWK_VAL_STR && v.str) return v.str;
+    if (v.type == HAWK_VAL_NUM) {
+        return hawk_num_to_str(v.num);
+    }
+    if (v.type == HAWK_VAL_BOOL) return v.boolean ? "true" : "false";
+    return "";
+}
+
+static inline bool hawk_val_to_bool(HawkVal v) {
+    if (v.type == HAWK_VAL_BOOL) return v.boolean;
+    if (v.type == HAWK_VAL_NUM) return v.num != 0.0;
+    if (v.type == HAWK_VAL_STR && v.str) return strlen(v.str) > 0;
+    return false;
+}
+
+static inline HawkVal hawk_val_add(HawkVal a, HawkVal b) {
+    if (a.type == HAWK_VAL_MATRIX && b.type == HAWK_VAL_MATRIX) {
+        return hawk_val_matrix(matrix_add(a.mat, b.mat));
+    }
+    if (a.type == HAWK_VAL_STR || b.type == HAWK_VAL_STR) {
+        const char *sa = hawk_val_to_str(a);
+        const char *sb = hawk_val_to_str(b);
+        return hawk_val_str(hawk_str_concat(sa, sb));
+    }
+    return hawk_val_num(hawk_val_to_num(a) + hawk_val_to_num(b));
+}
+
+static inline HawkVal hawk_val_sub(HawkVal a, HawkVal b) {
+    if (a.type == HAWK_VAL_MATRIX && b.type == HAWK_VAL_MATRIX) {
+        return hawk_val_matrix(matrix_sub(a.mat, b.mat));
+    }
+    return hawk_val_num(hawk_val_to_num(a) - hawk_val_to_num(b));
+}
+
+static inline HawkVal hawk_val_mult(HawkVal a, HawkVal b) {
+    if (a.type == HAWK_VAL_MATRIX && b.type == HAWK_VAL_MATRIX) {
+        return hawk_val_matrix(matrix_mult(a.mat, b.mat));
+    }
+    if (a.type == HAWK_VAL_MATRIX) {
+        return hawk_val_matrix(matrix_scale(a.mat, hawk_val_to_num(b)));
+    }
+    if (b.type == HAWK_VAL_MATRIX) {
+        return hawk_val_matrix(matrix_scale(b.mat, hawk_val_to_num(a)));
+    }
+    return hawk_val_num(hawk_val_to_num(a) * hawk_val_to_num(b));
+}
+
+static inline HawkVal hawk_val_div(HawkVal a, HawkVal b) {
+    double denom = hawk_val_to_num(b);
+    if (denom == 0.0) {
+        fprintf(stderr, "Hawk Error: Division by zero!\n");
+        exit(1);
+    }
+    return hawk_val_num(hawk_val_to_num(a) / denom);
+}
+
+static inline HawkVal hawk_val_mod(HawkVal a, HawkVal b) {
+    double denom = hawk_val_to_num(b);
+    return hawk_val_num(hawk_mod(hawk_val_to_num(a), denom));
+}
+
+static inline HawkVal hawk_val_pow(HawkVal a, HawkVal b) {
+    return hawk_val_num(pow(hawk_val_to_num(a), hawk_val_to_num(b)));
+}
+
+static inline bool hawk_val_eq(HawkVal a, HawkVal b) {
+    if (a.type == HAWK_VAL_STR && b.type == HAWK_VAL_STR) {
+        return (a.str && b.str) ? (strcmp(a.str, b.str) == 0) : (a.str == b.str);
+    }
+    if (a.type == HAWK_VAL_BOOL && b.type == HAWK_VAL_BOOL) {
+        return a.boolean == b.boolean;
+    }
+    return hawk_val_to_num(a) == hawk_val_to_num(b);
+}
+
+static inline bool hawk_val_eq_str(HawkVal a, const char *s) {
+    if (a.type == HAWK_VAL_STR && a.str && s) {
+        return strcmp(a.str, s) == 0;
+    }
+    return false;
+}
+
+static inline bool hawk_val_eq_num(HawkVal a, double n) {
+    return hawk_val_to_num(a) == n;
+}
+
+static inline bool hawk_val_eq_bool(HawkVal a, bool b) {
+    return hawk_val_to_bool(a) == b;
+}
+
+static inline void hawk_val_print(HawkVal v) {
+    if (v.type == HAWK_VAL_NUM) {
+        if (v.num == (long)v.num) {
+            printf("%ld ", (long)v.num);
+        } else {
+            printf("%g ", v.num);
+        }
+    } else if (v.type == HAWK_VAL_STR) {
+        printf("%s ", v.str ? v.str : "");
+    } else if (v.type == HAWK_VAL_BOOL) {
+        printf("%s ", v.boolean ? "true" : "false");
+    } else if (v.type == HAWK_VAL_MATRIX) {
+        printf("\n");
+        matrix_print(v.mat);
+    }
+}
+
+/* Ввод данных пользователем с авто-определением числа/строки (как в интерпретаторе Hawk) */
+static inline HawkVal hawk_input(const char *prompt) {
+    if (prompt && strlen(prompt) > 0) {
+        printf("%s", prompt);
+        fflush(stdout);
+    }
+    char buffer[4096];
+    if (fgets(buffer, sizeof(buffer), stdin)) {
+        size_t len = strlen(buffer);
+        while (len > 0 && (buffer[len - 1] == '\n' || buffer[len - 1] == '\r')) {
+            buffer[--len] = '\0';
+        }
+        // Проверяем, является ли ввод числом
+        char *start = buffer;
+        while (*start == ' ' || *start == '\t') start++;
+        if (*start != '\0') {
+            char *endptr = NULL;
+            double d = strtod(start, &endptr);
+            if (endptr != start) {
+                while (*endptr == ' ' || *endptr == '\t') endptr++;
+                if (*endptr == '\0') {
+                    return hawk_val_num(d);
+                }
+            }
+        }
+        return hawk_val_str(buffer);
+    }
+    return hawk_val_str("");
+}
+
 /* Ввод строки пользователем (консольный prompt) */
 static inline char* hawk_input_str(const char *prompt) {
     if (prompt && strlen(prompt) > 0) {
         printf("%s", prompt);
         fflush(stdout);
     }
-    static char buffer[1024];
+    char buffer[4096];
     if (fgets(buffer, sizeof(buffer), stdin)) {
         size_t len = strlen(buffer);
-        if (len > 0 && (buffer[len - 1] == '\n' || buffer[len - 1] == '\r')) {
-            buffer[len - 1] = '\0';
+        while (len > 0 && (buffer[len - 1] == '\n' || buffer[len - 1] == '\r')) {
+            buffer[--len] = '\0';
         }
-    } else {
-        buffer[0] = '\0';
+        return strdup(buffer);
     }
-    return buffer;
+    return strdup("");
 }
 
 /* Ввод числа пользователем */
@@ -246,19 +493,6 @@ static inline double hawk_input_num(const char *prompt) {
         val = 0.0;
     }
     return val;
-}
-
-/* Python-style modulo for doubles */
-static inline double hawk_mod(double a, double b) {
-    if (b == 0.0) {
-        fprintf(stderr, "Hawk Error: Division or modulo by zero!\n");
-        exit(1);
-    }
-    double m = fmod(a, b);
-    if ((m < 0.0 && b > 0.0) || (m > 0.0 && b < 0.0)) {
-        m += b;
-    }
-    return m;
 }
 
 #endif /* HAWK_MATRIX_H */

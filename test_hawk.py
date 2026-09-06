@@ -1,5 +1,5 @@
 """
-🦅 Тестовый набор для языка программирования Hawk v0.1
+Тестовый набор для языка программирования Hawk v0.1
 """
 
 import os
@@ -191,6 +191,27 @@ set a = input("Enter: ")
         formatted = format_code(messy_code)
         expected = 'set a = input("Enter: ")\n\nif (a = 0) {\n    print "Win"\n} else {\n    print "Lose"\n}\n'
         self.assertEqual(formatted, expected)
+
+    def test_c_native_dynamic_types_and_calculator(self):
+        code = """
+        set a = 10
+        set b = 5
+        set c = "+"
+        set done = false
+        if (c = "+") {
+            print a + b
+            set done = true
+        }
+        if (c = "*") {
+            print a * b
+            set done = true
+        }
+        if (done = false) {
+            print "Fail"
+        }
+        """
+        out = self.build_and_run_native(code)
+        self.assertEqual(out, ["15"])
 
 
 if __name__ == "__main__":

@@ -118,6 +118,8 @@ class CTranspiler:
             self.declared_vars.add(stmt.name)
             if val_type == "Matrix*":
                 return f"{pad}Matrix *{stmt.name} = {val_code};"
+            elif val_type == "HawkVal":
+                return f"{pad}HawkVal {stmt.name} = {val_code};"
             elif val_type in ("const char*", "char*"):
                 return f"{pad}const char *{stmt.name} = {val_code};"
             elif val_type == "bool":
@@ -128,7 +130,9 @@ class CTranspiler:
         if isinstance(stmt, IndexAssignStmt):
             r_code, _ = self.transpile_expr(stmt.row)
             c_code, _ = self.transpile_expr(stmt.column) if stmt.column else ("0", "double")
-            val_code, _ = self.transpile_expr(stmt.value)
+            val_code, val_t = self.transpile_expr(stmt.value)
+            if val_t == "HawkVal":
+                val_code = f"hawk_val_to_num({val_code})"
             return f"{pad}matrix_set({stmt.matrix_name}, (int)({r_code}), (int)({c_code}), {val_code});"
 
         if isinstance(stmt, PrintStmt):
@@ -137,6 +141,8 @@ class CTranspiler:
                 e_code, e_type = self.transpile_expr(e)
                 if e_type == "Matrix*":
                     lines.append(f"{pad}printf(\"\\n\"); matrix_print({e_code});")
+                elif e_type == "HawkVal":
+                    lines.append(f"{pad}hawk_val_print({e_code});")
                 elif e_type in ("const char*", "char*"):
                     lines.append(f"{pad}printf(\"%s \", {e_code});")
                 elif e_type == "bool":
@@ -148,13 +154,21 @@ class CTranspiler:
 
         if isinstance(stmt, ReturnStmt):
             if stmt.value:
-                val_code, _ = self.transpile_expr(stmt.value)
+                val_code, val_t = self.transpile_expr(stmt.value)
+                if val_t == "HawkVal":
+                    val_code = f"hawk_val_to_num({val_code})"
                 return f"{pad}return {val_code};"
             return f"{pad}return 0.0;"
 
         if isinstance(stmt, IfStmt):
-            cond_code, _ = self.transpile_expr(stmt.condition)
-            lines = [f"{pad}if ({cond_code}) {{"]
+            cond_code, cond_type = self.transpile_expr(stmt.condition)
+            if cond_type == "HawkVal":
+                cond_clean = f"hawk_val_to_bool({cond_code})"
+            elif cond_code.startswith("(") and cond_code.endswith(")"):
+                cond_clean = cond_code[1:-1]
+            else:
+                cond_clean = cond_code
+            lines = [f"{pad}if ({cond_clean}) {{"]
             for s in stmt.then_body:
                 lines.append(self.transpile_stmt(s, indent + 1))
             if stmt.else_body:
@@ -165,8 +179,14 @@ class CTranspiler:
             return "\n".join(lines)
 
         if isinstance(stmt, WhileStmt):
-            cond_code, _ = self.transpile_expr(stmt.condition)
-            lines = [f"{pad}while ({cond_code}) {{"]
+            cond_code, cond_type = self.transpile_expr(stmt.condition)
+            if cond_type == "HawkVal":
+                cond_clean = f"hawk_val_to_bool({cond_code})"
+            elif cond_code.startswith("(") and cond_code.endswith(")"):
+                cond_clean = cond_code[1:-1]
+            else:
+                cond_clean = cond_code
+            lines = [f"{pad}while ({cond_clean}) {{"]
             for s in stmt.body:
                 lines.append(self.transpile_stmt(s, indent + 1))
             lines.append(f"{pad}}}")
@@ -174,7 +194,14 @@ class CTranspiler:
 
         if isinstance(stmt, ForStmt):
             init_c = self.transpile_stmt(stmt.init, 0).strip().rstrip(";") if stmt.init else ""
-            cond_c, _ = self.transpile_expr(stmt.condition) if stmt.condition else ("1", "bool")
+            if stmt.condition:
+                cond_c, cond_t = self.transpile_expr(stmt.condition)
+                if cond_t == "HawkVal":
+                    cond_c = f"hawk_val_to_bool({cond_c})"
+                elif cond_c.startswith("(") and cond_c.endswith(")"):
+                    cond_c = cond_c[1:-1]
+            else:
+                cond_c = "1"
             step_c = self.transpile_stmt(stmt.step, 0).strip().rstrip(";") if stmt.step else ""
             lines = [f"{pad}for ({init_c}; {cond_c}; {step_c}) {{"]
             for s in stmt.body:
@@ -234,8 +261,12 @@ class CTranspiler:
             if expr.op == "-":
                 if op_type == "Matrix*":
                     return (f"matrix_scale({op_code}, -1.0)", "Matrix*")
+                if op_type == "HawkVal":
+                    return (f"hawk_val_sub(hawk_val_num(0.0), {op_code})", "HawkVal")
                 return (f"(-({op_code}))", "double")
             if expr.op == "not":
+                if op_type == "HawkVal":
+                    return (f"(!hawk_val_to_bool({op_code}))", "bool")
                 return (f"(!({op_code}))", "bool")
 
         if isinstance(expr, BinOpExpr):
@@ -249,12 +280,92 @@ class CTranspiler:
                     if l_type == "Matrix*" and r_type == "Matrix*":
                         return (f"matrix_mult({l_code}, {r_code})", "Matrix*")
                     if l_type == "Matrix*":
-                        return (f"matrix_scale({l_code}, {r_code})", "Matrix*")
-                    return (f"matrix_scale({r_code}, {l_code})", "Matrix*")
+                        r_val = f"hawk_val_to_num({r_code})" if r_type == "HawkVal" else r_code
+                        return (f"matrix_scale({l_code}, {r_val})", "Matrix*")
+                    l_val = f"hawk_val_to_num({l_code})" if l_type == "HawkVal" else l_code
+                    return (f"matrix_scale({r_code}, {l_val})", "Matrix*")
                 if op == "+":
                     return (f"matrix_add({l_code}, {r_code})", "Matrix*")
                 if op == "-":
                     return (f"matrix_sub({l_code}, {r_code})", "Matrix*")
+
+            # HawkVal dynamic operations
+            if l_type == "HawkVal" or r_type == "HawkVal":
+                l_hv = l_code if l_type == "HawkVal" else (
+                    f"hawk_val_num({l_code})" if l_type == "double" else (
+                        f"hawk_val_str({l_code})" if l_type in ("const char*", "char*") else (
+                            f"hawk_val_bool({l_code})" if l_type == "bool" else f"hawk_val_matrix({l_code})"
+                        )
+                    )
+                )
+                r_hv = r_code if r_type == "HawkVal" else (
+                    f"hawk_val_num({r_code})" if r_type == "double" else (
+                        f"hawk_val_str({r_code})" if r_type in ("const char*", "char*") else (
+                            f"hawk_val_bool({r_code})" if r_type == "bool" else f"hawk_val_matrix({r_code})"
+                        )
+                    )
+                )
+
+                if op == "+": return (f"hawk_val_add({l_hv}, {r_hv})", "HawkVal")
+                if op == "-": return (f"hawk_val_sub({l_hv}, {r_hv})", "HawkVal")
+                if op == "*": return (f"hawk_val_mult({l_hv}, {r_hv})", "HawkVal")
+                if op == "/": return (f"hawk_val_div({l_hv}, {r_hv})", "HawkVal")
+                if op == "%": return (f"hawk_val_mod({l_hv}, {r_hv})", "HawkVal")
+                if op == "^": return (f"hawk_val_pow({l_hv}, {r_hv})", "HawkVal")
+
+                # Comparisons with HawkVal
+                if op == "=":
+                    if r_type in ("const char*", "char*"):
+                        return (f"hawk_val_eq_str({l_code}, {r_code})", "bool")
+                    if l_type in ("const char*", "char*"):
+                        return (f"hawk_val_eq_str({r_code}, {l_code})", "bool")
+                    if r_type == "double":
+                        return (f"hawk_val_eq_num({l_code}, {r_code})", "bool")
+                    if l_type == "double":
+                        return (f"hawk_val_eq_num({r_code}, {l_code})", "bool")
+                    if r_type == "bool":
+                        return (f"hawk_val_eq_bool({l_code}, {r_code})", "bool")
+                    if l_type == "bool":
+                        return (f"hawk_val_eq_bool({r_code}, {l_code})", "bool")
+                    return (f"hawk_val_eq({l_hv}, {r_hv})", "bool")
+
+                if op == "!=":
+                    if r_type in ("const char*", "char*"):
+                        return (f"(!hawk_val_eq_str({l_code}, {r_code}))", "bool")
+                    if l_type in ("const char*", "char*"):
+                        return (f"(!hawk_val_eq_str({r_code}, {l_code}))", "bool")
+                    if r_type == "double":
+                        return (f"(!hawk_val_eq_num({l_code}, {r_code}))", "bool")
+                    if l_type == "double":
+                        return (f"(!hawk_val_eq_num({r_code}, {l_code}))", "bool")
+                    if r_type == "bool":
+                        return (f"(!hawk_val_eq_bool({l_code}, {r_code}))", "bool")
+                    if l_type == "bool":
+                        return (f"(!hawk_val_eq_bool({r_code}, {l_code}))", "bool")
+                    return (f"(!hawk_val_eq({l_hv}, {r_hv}))", "bool")
+
+                if op == ">": return (f"(hawk_val_to_num({l_hv}) > hawk_val_to_num({r_hv}))", "bool")
+                if op == "<": return (f"(hawk_val_to_num({l_hv}) < hawk_val_to_num({r_hv}))", "bool")
+                if op == ">=": return (f"(hawk_val_to_num({l_hv}) >= hawk_val_to_num({r_hv}))", "bool")
+                if op == "<=": return (f"(hawk_val_to_num({l_hv}) <= hawk_val_to_num({r_hv}))", "bool")
+                if op == "and": return (f"(hawk_val_to_bool({l_hv}) && hawk_val_to_bool({r_hv}))", "bool")
+                if op == "or": return (f"(hawk_val_to_bool({l_hv}) || hawk_val_to_bool({r_hv}))", "bool")
+
+            # String operations
+            if l_type in ("const char*", "char*") or r_type in ("const char*", "char*"):
+                if op == "+":
+                    l_str = l_code if l_type in ("const char*", "char*") else (
+                        f"hawk_num_to_str({l_code})" if l_type == "double" else f"hawk_bool_to_str({l_code})"
+                    )
+                    r_str = r_code if r_type in ("const char*", "char*") else (
+                        f"hawk_num_to_str({r_code})" if r_type == "double" else f"hawk_bool_to_str({r_code})"
+                    )
+                    return (f"hawk_str_concat({l_str}, {r_str})", "const char*")
+
+                if op == "=":
+                    return (f"hawk_str_eq({l_code}, {r_code})", "bool")
+                if op == "!=":
+                    return (f"(!hawk_str_eq({l_code}, {r_code}))", "bool")
 
             # Scalar arithmetic
             if op == "+": return (f"({l_code} + {r_code})", "double")
@@ -278,6 +389,9 @@ class CTranspiler:
             # Built-in functions
             if expr.callee == "input":
                 arg_code = self.transpile_expr(expr.args[0])[0] if expr.args else '""'
+                return (f"hawk_input({arg_code})", "HawkVal")
+            if expr.callee == "input_str":
+                arg_code = self.transpile_expr(expr.args[0])[0] if expr.args else '""'
                 return (f"hawk_input_str({arg_code})", "char*")
             if expr.callee == "input_num":
                 arg_code = self.transpile_expr(expr.args[0])[0] if expr.args else '""'
@@ -287,11 +401,19 @@ class CTranspiler:
                 return (f"matrix_det({m_code})", "double")
             if expr.callee in ("sin", "cos", "tan", "sqrt", "abs", "exp", "log", "round", "floor", "ceil"):
                 c_fn = "fabs" if expr.callee == "abs" else expr.callee
-                arg_code, _ = self.transpile_expr(expr.args[0])
+                arg_code, arg_t = self.transpile_expr(expr.args[0])
+                if arg_t == "HawkVal":
+                    arg_code = f"hawk_val_to_num({arg_code})"
                 return (f"{c_fn}({arg_code})", "double")
 
             # User functions
-            args_c = [self.transpile_expr(a)[0] for a in expr.args]
+            args_c = []
+            for a in expr.args:
+                ac, at = self.transpile_expr(a)
+                if at == "HawkVal":
+                    args_c.append(f"hawk_val_to_num({ac})")
+                else:
+                    args_c.append(ac)
             ret_t = self.fn_signatures.get(expr.callee, ("double", []))[0]
             return (f"{expr.callee}({', '.join(args_c)})", ret_t)
 
