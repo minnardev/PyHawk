@@ -218,7 +218,7 @@ def main():
     elif args.subcommand == "format":
         cmd_format(args)
     elif args.subcommand == "version":
-        print("🦅 PyHawk v0.1 (Python prototype) — Springfield-to-Native Edition")
+        print("🦅 PyHawk v0.1")
     else:
         parser.print_help()
 
