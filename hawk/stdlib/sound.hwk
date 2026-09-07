@@ -18,7 +18,7 @@ fn play(file) {
         system("(paplay \"" + file + "\" 2>/dev/null || aplay \"" + file + "\" 2>/dev/null || play \"" + file + "\" 2>/dev/null) &")
     }
     if (os = "windows") {
-        system("powershell -NoProfile -Command \"(New-Object Media.SoundPlayer '" + file + "').PlaySync()\"")
+        system("powershell -NoProfile -Command \"(New-Object Media.SoundPlayer '" + file + "').Play()\"")
     }
 }
 
