@@ -1,7 +1,7 @@
 # PyHawk Programming Language
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Language-PyHawk%20v0.1-blue.svg" alt="PyHawk" />
+  <img src="https://img.shields.io/badge/Language-PyHawk%20v0.3.1-blue.svg" alt="PyHawk" />
   <img src="https://img.shields.io/badge/Backend-Native%20C%20%2B%20Clang-green.svg" alt="Backend" />
   <img src="https://img.shields.io/badge/Matrices-In%20Core%20Syntax-orange.svg" alt="Matrices" />
   <img src="https://img.shields.io/badge/Modules-import%20system-purple.svg" alt="Modules" />
