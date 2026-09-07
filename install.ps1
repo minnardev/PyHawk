@@ -62,6 +62,16 @@ if ($ScriptDir -ne $InstallDir) {
     }
 }
 
+# Ensure stdlib is present in user stdlib dir
+$StdlibSrc = Join-Path $InstallDir "hawk\stdlib"
+$StdlibDst = Join-Path $env:USERPROFILE ".pyhawk\stdlib"
+if (-not (Test-Path $StdlibDst)) {
+    New-Item -ItemType Directory -Path $StdlibDst -Force | Out-Null
+}
+if (Test-Path $StdlibSrc) {
+    Copy-Item -Path (Join-Path $StdlibSrc "*") -Destination $StdlibDst -Recurse -Force
+}
+
 # 3. Create Windows batch launcher wrappers in $BinDir
 $cliPath = Join-Path $InstallDir "hawk_cli.py"
 

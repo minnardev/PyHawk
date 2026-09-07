@@ -27,6 +27,31 @@ class CTranspiler:
             os.path.dirname(os.path.abspath(__file__)), "runtime", "hawk_matrix.h"
         )
 
+    def _find_module(self, raw_path: str, base_dir: str) -> Optional[str]:
+        """Search for a .hwk module: local dir -> bundled stdlib -> user stdlib."""
+        # 1. Local
+        c = os.path.normpath(os.path.join(base_dir, raw_path))
+        if os.path.exists(c):
+            return c
+        if not raw_path.endswith(".hwk"):
+            c_hwk = c + ".hwk"
+            if os.path.exists(c_hwk):
+                return c_hwk
+        # 2. Bundled stdlib
+        pkg_dir = os.path.dirname(os.path.abspath(__file__))
+        for stdlib_dir in [
+            os.path.join(pkg_dir, "stdlib"),
+            os.path.join(os.path.expanduser("~"), ".pyhawk", "stdlib"),
+        ]:
+            c = os.path.normpath(os.path.join(stdlib_dir, raw_path))
+            if os.path.exists(c):
+                return c
+            if not raw_path.endswith(".hwk"):
+                c_hwk = c + ".hwk"
+                if os.path.exists(c_hwk):
+                    return c_hwk
+        return None
+
     def resolve_imports(self, stmts: List[Stmt], current_file: Optional[str] = None, visited: Optional[Set[str]] = None) -> List[Stmt]:
         if visited is None:
             visited = set()
@@ -39,15 +64,12 @@ class CTranspiler:
         for s in stmts:
             if isinstance(s, ImportStmt):
                 raw_path = s.module_path
-                candidate = os.path.normpath(os.path.join(base_dir, raw_path))
-                if not os.path.exists(candidate) and not raw_path.endswith(".hwk"):
-                    candidate_hwk = candidate + ".hwk"
-                    if os.path.exists(candidate_hwk):
-                        candidate = candidate_hwk
+                candidate = self._find_module(raw_path, base_dir)
 
-                if not os.path.exists(candidate):
+                if not candidate:
                     raise FileNotFoundError(
-                        f"Hawk Error: Cannot import '{raw_path}' (looked at '{candidate}'). File not found!"
+                        f"Hawk Error: Cannot import '{raw_path}'. "
+                        f"File not found in local dir, hawk/stdlib/, or ~/.pyhawk/stdlib/."
                     )
 
                 real_path = os.path.realpath(candidate)
@@ -451,6 +473,16 @@ class CTranspiler:
                 if arg_t == "HawkVal":
                     arg_code = f"hawk_val_to_num({arg_code})"
                 return (f"{c_fn}({arg_code})", "double")
+            if expr.callee == "system":
+                arg_code = self.transpile_expr(expr.args[0])[0] if expr.args else '""'
+                return (f"hawk_system({arg_code})", "double")
+            if expr.callee == "os_name":
+                return ("hawk_os_name()", "char*")
+            if expr.callee == "beep":
+                return ("(hawk_beep(), 0.0)", "double")
+            if expr.callee == "play_sound":
+                arg_code = self.transpile_expr(expr.args[0])[0] if expr.args else '""'
+                return (f"(hawk_play_sound({arg_code}), 0.0)", "double")
 
             # User functions
             args_c = []

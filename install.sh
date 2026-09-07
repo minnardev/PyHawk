@@ -72,6 +72,12 @@ if [[ "$SOURCE_DIR" != "$INSTALL_DIR" ]]; then
     cp "$SOURCE_DIR/README.md" "$INSTALL_DIR/" 2>/dev/null || true
 fi
 
+# Ensure stdlib is always present in user stdlib dir
+mkdir -p "$HOME/.pyhawk/stdlib"
+if [[ -d "$INSTALL_DIR/hawk/stdlib" ]]; then
+    cp -R "$INSTALL_DIR/hawk/stdlib/"* "$HOME/.pyhawk/stdlib/" 2>/dev/null || true
+fi
+
 # 4. Create launcher wrapper scripts in ~/.local/bin and $INSTALL_DIR/bin
 BIN_DIR="$HOME/.local/bin"
 mkdir -p "$BIN_DIR"

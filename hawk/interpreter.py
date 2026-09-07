@@ -1,9 +1,11 @@
 """
-🦅 Hawk Programming Language — Interpreter (Прямой рантайм на Python)
+Hawk Programming Language — Interpreter (Python Runtime)
 """
 
 import os
+import sys
 import math
+import subprocess
 from typing import Any, Dict, List, Optional, Set
 from hawk.ast_nodes import (
     Stmt, Expr, SetStmt, IndexAssignStmt, PrintStmt, IfStmt, WhileStmt, ForStmt,
@@ -242,15 +244,36 @@ class Interpreter:
         base_dir = os.path.dirname(self.current_file) if self.current_file else os.getcwd()
         raw_path = stmt.module_path
 
-        candidate = os.path.normpath(os.path.join(base_dir, raw_path))
-        if not os.path.exists(candidate) and not raw_path.endswith(".hwk"):
-            candidate_hwk = candidate + ".hwk"
-            if os.path.exists(candidate_hwk):
-                candidate = candidate_hwk
+        def _find_module(path: str, base: str) -> Optional[str]:
+            """Search for a .hwk module in: local dir -> bundled stdlib -> user stdlib."""
+            # 1. Local (relative to current script)
+            c = os.path.normpath(os.path.join(base, path))
+            if os.path.exists(c):
+                return c
+            if not path.endswith(".hwk"):
+                c_hwk = c + ".hwk"
+                if os.path.exists(c_hwk):
+                    return c_hwk
+            # 2. Bundled stdlib next to hawk package
+            pkg_dir = os.path.dirname(os.path.abspath(__file__))
+            for stdlib_dir in [
+                os.path.join(pkg_dir, "stdlib"),
+                os.path.join(os.path.expanduser("~"), ".pyhawk", "stdlib"),
+            ]:
+                c = os.path.normpath(os.path.join(stdlib_dir, path))
+                if os.path.exists(c):
+                    return c
+                if not path.endswith(".hwk"):
+                    c_hwk = c + ".hwk"
+                    if os.path.exists(c_hwk):
+                        return c_hwk
+            return None
 
-        if not os.path.exists(candidate):
+        candidate = _find_module(raw_path, base_dir)
+        if not candidate:
             raise FileNotFoundError(
-                f"Hawk Error: Cannot import '{raw_path}' (looked at '{candidate}'). File not found!"
+                f"Hawk Error: Cannot import '{raw_path}'. "
+                f"File not found in local dir, hawk/stdlib/, or ~/.pyhawk/stdlib/."
             )
 
         real_path = os.path.realpath(candidate)
@@ -413,6 +436,53 @@ class Interpreter:
                     return float(raw)
                 except ValueError:
                     return raw
+
+            if expr.callee == "system":
+                cmd = str(args[0]) if args else ""
+                return float(os.system(cmd))
+
+            if expr.callee == "os_name":
+                if sys.platform.startswith("darwin"):
+                    return "macos"
+                elif sys.platform.startswith("win"):
+                    return "windows"
+                else:
+                    return "linux"
+
+            if expr.callee == "beep":
+                if sys.platform.startswith("win"):
+                    try:
+                        import winsound
+                        winsound.MessageBeep()
+                    except Exception:
+                        print("\a", end="", flush=True)
+                else:
+                    print("\a", end="", flush=True)
+                return None
+
+            if expr.callee == "play_sound":
+                path = str(args[0]) if args else ""
+                if sys.platform.startswith("darwin"):
+                    subprocess.Popen(["afplay", path],
+                                     stdout=subprocess.DEVNULL,
+                                     stderr=subprocess.DEVNULL)
+                elif sys.platform.startswith("win"):
+                    try:
+                        import winsound
+                        winsound.PlaySound(path, winsound.SND_FILENAME | winsound.SND_ASYNC)
+                    except Exception:
+                        pass
+                else:
+                    # Linux: try paplay, then aplay, then play (sox)
+                    for player in ["paplay", "aplay", "play"]:
+                        try:
+                            subprocess.Popen([player, path],
+                                             stdout=subprocess.DEVNULL,
+                                             stderr=subprocess.DEVNULL)
+                            break
+                        except FileNotFoundError:
+                            continue
+                return None
 
             # Пользовательские функции
             if expr.callee in self.functions:

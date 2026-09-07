@@ -8,7 +8,7 @@ setup(
     packages=find_packages(),
     py_modules=["hawk_cli"],
     package_data={
-        "hawk": ["runtime/*.h"],
+        "hawk": ["runtime/*.h", "stdlib/*.hwk"],
     },
     entry_points={
         "console_scripts": [

@@ -1,0 +1,31 @@
+# os.hwk — Hawk Standard Library: OS Utilities
+# Cross-platform OS helpers: macOS, Linux, Windows
+
+fn current_os() {
+    return os_name()
+}
+
+fn exec(cmd) {
+    return system(cmd)
+}
+
+fn is_macos() {
+    if (os_name() = "macos") {
+        return true
+    }
+    return false
+}
+
+fn is_linux() {
+    if (os_name() = "linux") {
+        return true
+    }
+    return false
+}
+
+fn is_windows() {
+    if (os_name() = "windows") {
+        return true
+    }
+    return false
+}

@@ -1,0 +1,23 @@
+# sound.hwk — Hawk Standard Library: Sound
+# Cross-platform audio: macOS, Linux, Windows
+
+fn play(file) {
+    set os = os_name()
+    if (os = "macos") {
+        system("afplay \"" + file + "\" &")
+    }
+    if (os = "linux") {
+        system("(paplay \"" + file + "\" 2>/dev/null || aplay \"" + file + "\" 2>/dev/null || play \"" + file + "\" 2>/dev/null) &")
+    }
+    if (os = "windows") {
+        system("powershell -NoProfile -Command \"(New-Object Media.SoundPlayer '" + file + "').PlaySync()\"")
+    }
+}
+
+fn alert() {
+    beep()
+}
+
+fn sound_beep() {
+    beep()
+}

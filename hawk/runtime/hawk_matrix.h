@@ -495,5 +495,64 @@ static inline double hawk_input_num(const char *prompt) {
     return val;
 }
 
+/* ============================================================
+ * Cross-Platform OS, System & Audio Functions
+ * ============================================================ */
+
+/* Выполнить системную команду, вернуть код возврата */
+static inline double hawk_system(const char *cmd) {
+    if (!cmd) return 0.0;
+    return (double)system(cmd);
+}
+
+/* Определить текущую ОС */
+static inline const char* hawk_os_name(void) {
+#if defined(_WIN32) || defined(_WIN64)
+    return "windows";
+#elif defined(__APPLE__)
+    return "macos";
+#else
+    return "linux";
+#endif
+}
+
+/* Звуковой сигнал (beep) */
+static inline void hawk_beep(void) {
+#if defined(_WIN32) || defined(_WIN64)
+    /* Windows: системный сигнал через MessageBeep (без winmm) */
+    printf("\a");
+    fflush(stdout);
+#else
+    printf("\a");
+    fflush(stdout);
+#endif
+}
+
+/* Воспроизвести аудиофайл (в фоне, не блокируя выполнение) */
+static inline void hawk_play_sound(const char *path) {
+    if (!path || strlen(path) == 0) return;
+
+    char cmd[4096];
+
+#if defined(__APPLE__)
+    /* macOS: afplay в фоне */
+    snprintf(cmd, sizeof(cmd), "afplay \"%s\" &", path);
+    system(cmd);
+#elif defined(_WIN32) || defined(_WIN64)
+    /* Windows: PowerShell SoundPlayer без блокировки */
+    snprintf(cmd, sizeof(cmd),
+        "powershell -NoProfile -Command \""
+        "(New-Object Media.SoundPlayer '%s').PlaySync()\" &",
+        path);
+    system(cmd);
+#else
+    /* Linux: paplay -> aplay -> play (sox) */
+    snprintf(cmd, sizeof(cmd),
+        "(paplay \"%s\" 2>/dev/null || aplay \"%s\" 2>/dev/null || play \"%s\" 2>/dev/null) &",
+        path, path, path);
+    system(cmd);
+#endif
+}
+
 #endif /* HAWK_MATRIX_H */
 
