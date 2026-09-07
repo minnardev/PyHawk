@@ -17,57 +17,57 @@
     |       ||       ||       ||     |_ 
     |   _   ||   _   ||   _   ||    _  |
     |__| |__||__| |__||__| |__||___| |_|
-   PyHawk — Sharp as a hawk, fast as math (v0.1)
+   PyHawk — Sharp as a hawk, fast as math (v0.3.1)
 ```
 
-> **PyHawk** — полнофункциональный язык программирования с математическим синтаксисом, чистым кодом и прямой трансляцией в нативный машинный Си (C99 -O3 через Clang/GCC).
-> Файлы исходного кода: `.hwk`
+> **PyHawk** is a full-featured programming language with mathematical syntax, clean code design, and direct translation into native C (C99 -O3 via Clang/GCC).  
+> Source code files: `.hwk`
 
 ---
 
-## Быстрая установка
+## Quick Installation
 
 ### macOS / Linux:
 ```bash
 ./install.sh
 ```
-*(Скрипт автоматически добавит `pyhawk` и `hawk` в `~/.local/bin`, настроит `$PATH` в вашем шелле и установит расширение для VS Code).*
+*(The script automatically adds `pyhawk` and `hawk` to `~/.local/bin`, updates `$PATH` in your shell, and installs the VS Code extension).*
 
 ### Windows:
-Запустите `install.bat` (или в PowerShell: `powershell -ExecutionPolicy Bypass -File install.ps1`).
-*(Автоматически добавит `pyhawk` в системный PATH и установит расширение).*
+Run `install.bat` (or in PowerShell: `powershell -ExecutionPolicy Bypass -File install.ps1`).  
+*(Automatically adds `pyhawk` to system PATH and installs the extension).*
 
-### Установка через pip (любая ОС):
+### Installation via pip into a project (Any OS):
 ```bash
 pip install -e .
 ```
 
 ---
 
-## Манифест и Философия
+## Manifesto & Philosophy
 
-Hawk — **НЕ** узкоспециализированный калькулятор. Это язык для:
-- Сложных математических подсчётов **на лету** (киллер-фича).
-- Быстрой разработки прикладных скриптов и системных утилит.
-- Разделения проектов на чистые многофайловые модули (`import`).
-- Серверов и сетевых сервисов.
+Hawk is **NOT** a domain-specific calculator. It is a language built for:
+- Complex mathematical calculations **on the fly** (killer feature).
+- Fast development of application scripts and system utilities.
+- Structuring projects into clean multi-file modules (`import`).
+- Servers and network services.
 
-**Родословная:** Python (чистота и читаемость) + C (скорость, компиляция в машинный код) + MATLAB (матрицы в ядре синтаксиса).
+**Lineage:** Python (cleanliness and readability) + C (speed, native compilation) + MATLAB (matrices built into core syntax).
 
 ---
 
-## Синтаксис языка
+## Language Syntax
 
-### 1. Переменные только через `set`
+### 1. Variables require `set`
 ```hawk
 set x = 5
 set pi = 3.14159
 set name = "Hawk"
-set r: float = 5.0    # опциональная аннотация типа
+set r: float = 5.0    # optional type annotation
 ```
-> В Hawk знак `=` внутри выражений используется **только для проверки равенства** (как в математике и SQL). Присваивание происходит только через ключевое слово `set`. Голое присвоение `x = 5` выдаёт понятную подсказку с номером строки и столбца.
+> In Hawk, the `=` sign inside expressions is used **strictly for equality checks** (as in mathematics and SQL). Assignment occurs only via the `set` keyword. Bare assignment like `x = 5` throws a clear hint with line and column numbers.
 
-### 2. Булевы типы (`true` / `false`) и логика (`and`, `or`, `not`)
+### 2. Booleans (`true` / `false`) and Logic (`and`, `or`, `not`)
 ```hawk
 set is_active = true
 set is_admin = false
@@ -75,19 +75,19 @@ set is_admin = false
 set can_access = is_active and (not is_admin or x > 0)
 
 if (is_active = true) {
-    print "Система активна"
+    print "System active"
 }
 ```
 
-### 3. Математика, неявное умножение и остаток от деления (`%`)
-Hawk поддерживает естественную математическую запись без лишних звёздочек `*`:
+### 3. Math, Implicit Multiplication & Modulo (`%`)
+Hawk supports natural mathematical notation without unnecessary asterisks `*`:
 ```hawk
-set S = pi r^2        # эквивалентно: pi * (r ^ 2)
-set y = 2x + 1        # эквивалентно: 2 * x + 1
+set S = pi r^2        # equivalent to: pi * (r ^ 2)
+set y = 2x + 1        # equivalent to: 2 * x + 1
 
-# Остаток от деления (%)
+# Modulo (%)
 set remainder = 10 % 3
-print remainder       # напечатает: 1
+print remainder       # prints: 1
 
 fn is_even(n) {
     return (n % 2 = 0)
@@ -96,19 +96,19 @@ print is_even(4)      # true
 print is_even(7)      # false
 ```
 
-### 4. Интерактивный ввод данных (`input`)
-Функция `input("подсказка: ")` автоматически определяет тип: если введено число, оно становится числом, если текст — строкой. Работает одинаково как в интерпретаторе, так и в скомпилированном Си-бинарнике:
+### 4. Interactive Input (`input`)
+The `input("prompt: ")` function automatically handles types: numeric input parses as a number, text stays a string. Works identically in both the interpreter and compiled C binaries:
 ```hawk
-set name = input("Как тебя зовут? ")
-print "Привет,", name
+set name = input("What's your name? ")
+print "Hello,", name
 
-set a = input("Введите первое число: ")
-set b = input("Введите второе число: ")
-print "Сумма:", a + b
+set a = input("Enter first number: ")
+set b = input("Enter second number: ")
+print "Sum:", a + b
 ```
 
-### 5. Многофайловые модули (`import`)
-Hawk позволяет легко собирать одно приложение из нескольких файлов. Все функции и переменные импортированного файла становятся напрямую доступны:
+### 5. Multi-file Modules (`import`)
+Hawk lets you build applications across multiple files easily. All functions and variables from an imported file are directly accessible:
 
 **`helpers.hwk`**:
 ```hawk
@@ -121,44 +121,44 @@ set DEFAULT_OFFSET = 100
 
 **`main.hwk`**:
 ```hawk
-import "helpers.hwk"    # также поддерживается: import "helpers" и import helpers
+import "helpers.hwk"    # also supports: import "helpers" and import helpers
 
 set val = 5
-print square(val) + DEFAULT_OFFSET   # напечатает: 125
+print square(val) + DEFAULT_OFFSET   # prints: 125
 ```
-> Компилятор автоматически отслеживает циклические зависимости и повторные включения (аналог `#pragma once`), объединяя модули в единый высокоскоростной бинарник без проблем с линковкой.
+> The compiler automatically tracks circular dependencies and duplicate includes (similar to `#pragma once`), bundling modules into a single high-speed binary without linker issues.
 
-### 6. Матрицы в синтаксисе ядра (стиль MATLAB)
-Точка с запятой `;` живёт **только внутри матриц** и разделяет строки:
+### 6. Core Matrix Syntax (MATLAB-style)
+Semicolons `;` exist **exclusively inside matrices** to separate rows:
 ```hawk
 set A = [1, 2 ; 3, 4]
 set B = [2, 0 ; 1, 2]
 
-set C = A * B         # матричное произведение
-set At = A'           # транспонирование через штрих '
-print det(A)          # определитель (детерминант)
-print C[0, 1]         # взятие элемента [строка, столбец]
+set C = A * B         # matrix multiplication
+set At = A'           # transposition via prime operator '
+print det(A)          # determinant
+print C[0, 1]         # element access [row, column]
 ```
 
-### 7. Функции (`fn` / `return`)
+### 7. Functions (`fn` / `return`)
 ```hawk
 fn area(r) {
     return pi r^2
 }
-print "Площадь r=5:", area(5)
+print "Area r=5:", area(5)
 ```
 
-### 8. Условия и циклы
-Поддерживаются цепочечные сравнения как в математике:
+### 8. Conditions and Loops
+Chained comparisons work just like in mathematics:
 ```hawk
 if (1 < r < 10) {
-    print "r строго между 1 и 10!"
+    print "r is strictly between 1 and 10!"
 }
 
 if (x = 5) {
-    print "x равен 5!"
+    print "x equals 5!"
 } else {
-    print "x не равен 5"
+    print "x does not equal 5"
 }
 
 set count = 3
@@ -168,78 +168,78 @@ while (count > 0) {
 }
 
 for (set i = 0; i < 5; set i = i + 1) {
-    print "Шаг:", i
+    print "Step:", i
 }
 ```
 
 ---
 
-## Форматтер кода (`format`)
+## Code Formatter (`format`)
 
-PyHawk поставляется со встроенным автоформаттером кода (отступы 4 пробела, форматирование фигурных скобок `{ ... }` и матриц `[ ... ]`, нормализация пустых строк):
+PyHawk comes with a built-in code auto-formatter (4-space indentation, formatting for curly braces `{ ... }` and matrices `[ ... ]`, empty line normalization):
 
 ```bash
-# Отформатировать файл на месте:
+# Format file in-place:
 pyhawk format script.hwk -w
 
-# Вывести отформатированный код в stdout:
+# Output formatted code to stdout:
 pyhawk format script.hwk
 
-# Форматирование через stdin:
+# Format via stdin:
 cat script.hwk | pyhawk format --stdin
 ```
 
 ---
 
-## Расширение для VS Code
+## VS Code Extension
 
-В папке `vscode-hawk/` находится официальное расширение:
-- **Подсветка синтаксиса**: ключевые слова, матрицы, функции, операторы и интерполяция строк.
-- **Автоформатирование документа**: по горячим клавишам **`Shift + Option + F`** (macOS) / **`Shift + Alt + F`** (Windows/Linux) или при сохранении (`formatOnSave`).
-- **Синтаксическая диагностика (Linter)**: мгновенная подсветка ошибок и подсказки прямо в редакторе через команду `pyhawk check`.
+The official extension is located in the `vscode-hawk/` directory:
+- **Syntax Highlighting**: Keywords, matrices, functions, operators, and string interpolation.
+- **Document Auto-formatting**: Via hotkeys **`Shift + Option + F`** (macOS) / **`Shift + Alt + F`** (Windows/Linux) or on save (`formatOnSave`).
+- **Syntax Diagnostics (Linter)**: Real-time error highlighting and hints directly in the editor using `pyhawk check`.
 
 ---
 
-## Команды CLI (`pyhawk` / `hawk`)
+## CLI Commands (`pyhawk` / `hawk`)
 
 ```bash
-# 1. Запустить интерактивную математическую консоль (REPL):
+# 1. Launch interactive math REPL:
 pyhawk repl
 
-# 2. Выполнить файл через интерпретатор:
+# 2. Execute a file via interpreter:
 pyhawk run main.hwk
 
-# 3. Скомпилировать в нативный бинарник (C99 + Clang -O3):
+# 3. Compile to native binary (C99 + Clang -O3):
 pyhawk build main.hwk -o my_app
 ./my_app
 
-# 4. Посмотреть сгенерированный чистый код на Си:
+# 4. Inspect generated clean C code:
 pyhawk emit main.hwk
 
-# 5. Проверить синтаксис (JSON-диагностика для IDE):
+# 5. Check syntax (JSON diagnostics for IDEs):
 pyhawk check main.hwk
 
-# 6. Отформатировать файл:
+# 6. Format file:
 pyhawk format main.hwk -w
 
-# 7. Версия языка:
+# 7. Print language version:
 pyhawk version
 ```
 
 ---
 
-## Архитектура: связь с машинным Си
+## Architecture: Native C Integration
 
-Компилятор транслирует код Hawk в строгий ANSI C99 с подключением рантайма `hawk_matrix.h`:
-- Матричные операции работают напрямую с плоским массивом `data[r * cols + c]` без лишних аллокаций.
-- Динамические операции и функции ввода поддерживаются через легковесную систему `HawkVal`.
-- Все импортированные модули компилируются в единую единицу трансляции — итоговый бинарник компилируется с оптимизациями `-O3` и выполняется с максимальной скоростью процессора.
+The compiler translates Hawk code into strict ANSI C99 linked against the `hawk_matrix.h` runtime:
+- Matrix operations work directly on flat arrays `data[r * cols + c]` without extra allocations.
+- Dynamic operations and input routines are backed by a lightweight `HawkVal` engine.
+- All imported modules compile into a single translation unit — producing a final binary built with `-O3` optimizations running at bare-metal speeds.
 
 ---
 
-## Тесты
+## Tests
 
-Запуск полного набора модульных тестов:
+Run the full unit test suite:
 ```bash
 python3 test_hawk.py
 ```
@@ -265,7 +265,7 @@ OK
 
 ---
 
-## Лицензия
+## License
 
-Распространяется под свободной лицензией **MIT**.  
-«Sharp as a hawk, fast as math».
+Distributed under the open-source **MIT** license.  
+"Sharp as a hawk, fast as math".
