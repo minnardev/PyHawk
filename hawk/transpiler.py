@@ -1,6 +1,6 @@
 """
 Hawk Programming Language — C Transpiler & Compiler
-Генерирует чистый, понятный Си-код и компилирует его через clang/gcc.
+Generates clean, readable C code and compiles it via clang/gcc.
 """
 
 import os

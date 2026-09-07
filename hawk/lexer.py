@@ -1,5 +1,5 @@
 """
-🦅 Hawk Programming Language — Lexer (Токенизатор)
+Hawk Programming Language — Lexer (Tokenizer)
 """
 
 from enum import Enum, auto
@@ -8,14 +8,14 @@ from hawk.errors import HawkSyntaxError
 
 
 class TokenType(Enum):
-    # Литералы
+    # Literals
     NUMBER = auto()
     STRING = auto()
     ID = auto()
     TRUE = auto()
     FALSE = auto()
 
-    # Ключевые слова
+    # Keywords
     SET = auto()
     PRINT = auto()
     FN = auto()
@@ -26,13 +26,13 @@ class TokenType(Enum):
     FOR = auto()
     IMPORT = auto()
 
-    # Логика
+    # Logic
     AND = auto()
     OR = auto()
     NOT = auto()
 
-    # Операторы
-    EQ = auto()          # = (проверка равенства)
+    # Operators
+    EQ = auto()          # = (equality check)
     NE = auto()          # !=
     GT = auto()          # >
     LT = auto()          # <
@@ -42,11 +42,11 @@ class TokenType(Enum):
     MINUS = auto()       # -
     STAR = auto()        # *
     SLASH = auto()       # /
-    PERCENT = auto()     # % (остаток от деления)
-    CARET = auto()       # ^ (степень)
-    PRIME = auto()       # ' (транспонирование)
+    PERCENT = auto()     # % (modulo)
+    CARET = auto()       # ^ (exponentiation)
+    PRIME = auto()       # ' (transpose)
 
-    # Разделители
+    # Delimiters
     LPAREN = auto()      # (
     RPAREN = auto()      # )
     LBRACE = auto()      # {
@@ -55,7 +55,7 @@ class TokenType(Enum):
     RBRACKET = auto()    # ]
     COMMA = auto()       # ,
     COLON = auto()       # :
-    SEMICOLON = auto()   # ; (только внутри матриц)
+    SEMICOLON = auto()   # ; (inside matrices only)
     NEWLINE = auto()     # \n
     EOF = auto()
 
@@ -121,28 +121,28 @@ class Lexer:
             start_line = self.line
             start_col = self.col
 
-            # 1. Пропуск пробелов (не переносов строк)
+            # 1. Skip whitespace (not newlines)
             if ch in " \t\r":
                 self.advance()
                 continue
 
-            # 2. Комментарии # или //
+            # 2. Comments: # or //
             if ch == "#" or (ch == "/" and self.peek(1) == "/"):
                 while self.pos < len(self.code) and self.peek() != "\n":
                     self.advance()
                 continue
 
-            # 3. Переводы строк
+            # 3. Newlines
             if ch == "\n":
                 self.advance()
-                # Перевод строки генерирует NEWLINE только если мы не внутри скобок [ ... ]
+                # Emit NEWLINE only when not inside brackets [ ... ]
                 if self.bracket_depth == 0:
-                    # Избегаем повторных подряд NEWLINE
+                    # Avoid consecutive duplicate NEWLINEs
                     if not tokens or tokens[-1].type != TokenType.NEWLINE:
                         tokens.append(Token(TokenType.NEWLINE, "\n", start_line, start_col))
                 continue
 
-            # 4. Числа (включая неявное умножение 2x -> 2 и x)
+            # 4. Numbers (including implicit multiplication: 2x -> 2 and x)
             if ch.isdigit() or (ch == "." and self.peek(1).isdigit()):
                 num_str = ""
                 has_dot = False
@@ -159,7 +159,7 @@ class Lexer:
                 tokens.append(Token(TokenType.NUMBER, val, start_line, start_col))
                 continue
 
-            # 5. Строки "..."
+            # 5. String literals "..."
             if ch == '"':
                 self.advance() # eat "
                 s_chars = []
@@ -180,7 +180,7 @@ class Lexer:
                 tokens.append(Token(TokenType.STRING, "".join(s_chars), start_line, start_col))
                 continue
 
-            # 6. Идентификаторы и ключевые слова
+            # 6. Identifiers and keywords
             if ch.isalpha() or ch == "_":
                 ident = ""
                 while self.pos < len(self.code) and (self.peek().isalnum() or self.peek() == "_"):
@@ -190,7 +190,7 @@ class Lexer:
                 tokens.append(Token(ttype, ident, start_line, start_col))
                 continue
 
-            # 7. Двухсимвольные операторы
+            # 7. Two-character operators
             two_ch = self.peek() + self.peek(1)
             if two_ch == "!=":
                 self.advance(); self.advance()
@@ -205,7 +205,7 @@ class Lexer:
                 tokens.append(Token(TokenType.LTE, "<=", start_line, start_col))
                 continue
 
-            # 8. Односимвольные операторы и скобки
+            # 8. Single-character operators and brackets
             if ch == "=":
                 self.advance()
                 tokens.append(Token(TokenType.EQ, "=", start_line, start_col))
@@ -271,7 +271,7 @@ class Lexer:
                 bad_char = self.advance()
                 raise HawkSyntaxError(f"Unexpected character '{bad_char}'", line=start_line, col=start_col, end_col=start_col + 1)
 
-        # Завершающий токен
+        # Trailing EOF token
         if not tokens or tokens[-1].type != TokenType.NEWLINE:
             tokens.append(Token(TokenType.NEWLINE, "\n", self.line, self.col))
         tokens.append(Token(TokenType.EOF, "", self.line, self.col))

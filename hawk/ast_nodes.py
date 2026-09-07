@@ -48,7 +48,7 @@ class VarExpr(Expr):
 
 @dataclass
 class MatrixLiteral(Expr):
-    # rows: список строк, каждая строка — список выражений
+    # rows: list of rows, each row is a list of expressions
     # [[1, 2], [3, 4]]
     rows: List[List[Expr]]
     line: int = 1
@@ -59,7 +59,7 @@ class MatrixLiteral(Expr):
 class MatrixIndexExpr(Expr):
     matrix: Expr
     row: Expr
-    column: Optional[Expr] = None  # для m[r, c] или v[r]
+    column: Optional[Expr] = None  # for m[r, c] or v[r]
     line: int = 1
     src_col: int = 1
 

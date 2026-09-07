@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="pyhawk",
-    version="0.1.0",
+    version="0.3.1",
     description="PyHawk Programming Language — Sharp as a hawk, fast as math (Python Prototype)",
     author="minnardev",
     packages=find_packages(),

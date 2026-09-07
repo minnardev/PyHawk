@@ -49,7 +49,7 @@ class HawkMatrix:
 
     def mult(self, other: Any) -> Any:
         if isinstance(other, (int, float)):
-            # Умножение на скаляр
+            # Scalar multiplication
             return HawkMatrix(self.rows, self.cols, [x * other for x in self.data])
         if isinstance(other, HawkMatrix):
             if self.cols != other.rows:
@@ -86,7 +86,7 @@ class HawkMatrix:
             g, h, i = self.get(2, 0), self.get(2, 1), self.get(2, 2)
             return a*(e*i - f*h) - b*(d*i - f*g) + c*(d*h - e*g)
 
-        # Метод Гаусса для n > 3
+        # Gaussian elimination for n > 3
         mat = [list(self.data[i * n:(i + 1) * n]) for i in range(n)]
         d = 1.0
         for col in range(n):
@@ -303,7 +303,7 @@ class Interpreter:
             return expr.value
 
         if isinstance(expr, StringExpr):
-            # Простая интерполяция f-строк {expr}
+            # Simple f-string interpolation {expr}
             s = expr.value
             if "{" in s and "}" in s:
                 import re
@@ -396,8 +396,8 @@ class Interpreter:
             if op == "^":
                 return l ** r
 
-            # Сравнения
-            if op == "=":  # Равенство!
+            # Comparisons
+            if op == "=":  # Equality!
                 if isinstance(l, HawkMatrix) and isinstance(r, HawkMatrix):
                     return l.rows == r.rows and l.cols == r.cols and l.data == r.data
                 return l == r
@@ -419,7 +419,7 @@ class Interpreter:
         if isinstance(expr, CallExpr):
             args = [self.eval_expr(a, env) for a in expr.args]
 
-            # Встроенные функции
+            # Built-in functions
             if expr.callee == "det":
                 if isinstance(args[0], HawkMatrix):
                     return args[0].det()
@@ -484,7 +484,7 @@ class Interpreter:
                             continue
                 return None
 
-            # Пользовательские функции
+            # User-defined functions
             if expr.callee in self.functions:
                 fn_def = self.functions[expr.callee]
                 if len(args) != len(fn_def.params):

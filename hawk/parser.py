@@ -1,5 +1,5 @@
 """
-Hawk Programming Language — Parser (Синтаксический анализатор)
+Hawk Programming Language — Parser (Syntax Analyzer)
 """
 
 from typing import List, Optional
@@ -48,7 +48,7 @@ class Parser:
         while self.peek().type in (TokenType.NEWLINE, TokenType.SEMICOLON):
             self.advance()
 
-    # --- Главная точка входа ---
+    # --- Entry Point ---
 
     def parse(self) -> List[Stmt]:
         stmts: List[Stmt] = []
@@ -62,7 +62,7 @@ class Parser:
 
         return stmts
 
-    # --- Инструкции (Statements) ---
+    # --- Statements ---
 
     def parse_stmt(self) -> Stmt:
         tok = self.peek()
@@ -99,12 +99,12 @@ class Parser:
         if tok.type == TokenType.IMPORT:
             return self.parse_import_stmt()
 
-        # 9. Проверка на ошибочное голое присваивание без set: x = 5
+        # 9. Check for bare assignment without 'set': x = 5
         if tok.type == TokenType.ID:
             next_tok = self.peek(1)
             # m[r, c] = val
             if next_tok.type == TokenType.LBRACKET:
-                # Попробуем разобрать m[r, c] = expr
+                # Try to parse m[r, c] = expr
                 return self.parse_index_assign()
             elif next_tok.type == TokenType.EQ:
                 raise HawkSyntaxError(
@@ -114,7 +114,7 @@ class Parser:
                     end_col=next_tok.col + 1
                 )
 
-        # Выражение как инструкция (например вызов функции)
+        # Expression as statement (e.g. a function call)
         expr = self.parse_expr()
         return ExprStmt(expr, line=tok.line, col=tok.col)
 
@@ -162,7 +162,7 @@ class Parser:
             return IndexAssignStmt(matrix_name=name_tok.value, row=r_expr, column=c_expr, value=val_expr,
                                    line=name_tok.line, src_col=name_tok.col)
         else:
-            # Это просто выражение m[r, c]
+            # Just an expression: m[r, c]
             base_node = VarExpr(name_tok.value, name_tok.line, name_tok.col)
             idx_expr = MatrixIndexExpr(base_node, r_expr, column=c_expr, line=name_tok.line, src_col=name_tok.col)
             return ExprStmt(self.parse_postfix_continue(idx_expr))
@@ -254,7 +254,7 @@ class Parser:
         self.expect(TokenType.RBRACE, "Expected '}' at the end of block")
         return stmts
 
-    # --- Выражения (Expressions) ---
+    # --- Expressions ---
 
     def parse_expr(self) -> Expr:
         return self.parse_or()
@@ -277,7 +277,7 @@ class Parser:
         left = self.parse_additive()
         comp_ops = (TokenType.EQ, TokenType.NE, TokenType.GT, TokenType.LT, TokenType.GTE, TokenType.LTE)
 
-        # Поддержка цепочек сравнений: 1 < r < 10 -> (1 < r) and (r < 10)
+        # Support chained comparisons: 1 < r < 10 -> (1 < r) and (r < 10)
         comparisons = []
         while self.peek().type in comp_ops:
             op_tok = self.advance()
@@ -292,8 +292,7 @@ class Parser:
             op_str, right = comparisons[0]
             return BinOpExpr(op=op_str, left=left, right=right, line=left.line, col=left.col)
 
-        # Цепочка: left op1 right1 and right1 op2 right2
-        # Разворачиваем в and
+        # Chain: left op1 right1 and right1 op2 right2 — unfold into 'and' tree
         curr_left = left
         combined = None
         for op_str, curr_right in comparisons:
@@ -317,14 +316,14 @@ class Parser:
         left = self.parse_power()
 
         while True:
-            # Явное умножение / деление / остаток (%)
+            # Explicit multiplication / division / modulo
             if self.peek().type in (TokenType.STAR, TokenType.SLASH, TokenType.PERCENT):
                 op_tok = self.advance()
                 right = self.parse_power()
                 left = BinOpExpr(op=op_tok.value, left=left, right=right, line=left.line, col=left.col)
                 continue
 
-            # Неявное умножение только для чисел и переменных (не для строк!)
+            # Implicit multiplication only for numbers and variables (not strings)
             if isinstance(left, StringExpr):
                 break
 
@@ -343,7 +342,7 @@ class Parser:
     def parse_power(self) -> Expr:
         left = self.parse_unary()
         if self.match(TokenType.CARET):
-            right = self.parse_power() # правоассоциативно: 2^3^4 = 2^(3^4)
+            right = self.parse_power()  # right-associative: 2^3^4 = 2^(3^4)
             return BinOpExpr(op="^", left=left, right=right, line=left.line, col=left.col)
         return left
 
@@ -362,12 +361,12 @@ class Parser:
 
     def parse_postfix_continue(self, node: Expr) -> Expr:
         while True:
-            # Транспонирование: m'
+            # Transpose: m'
             if self.match(TokenType.PRIME):
                 node = TransposeExpr(matrix=node, line=node.line, col=node.col)
                 continue
 
-            # Индексация: m[r, c] или v[r]
+            # Indexing: m[r, c] or v[r]
             if self.match(TokenType.LBRACKET):
                 r_expr = self.parse_expr()
                 c_expr = None
@@ -377,7 +376,7 @@ class Parser:
                 node = MatrixIndexExpr(matrix=node, row=r_expr, column=c_expr, line=node.line, src_col=getattr(node, "src_col", getattr(node, "col", 1)))
                 continue
 
-            # Вызов функции: f(a, b)
+            # Function call: f(a, b)
             if self.match(TokenType.LPAREN):
                 args = []
                 if self.peek().type != TokenType.RPAREN:
@@ -398,31 +397,31 @@ class Parser:
     def parse_primary(self) -> Expr:
         tok = self.peek()
 
-        # Число
+        # Number literal
         if self.match(TokenType.NUMBER):
             return NumberExpr(value=tok.value, line=tok.line, col=tok.col)
 
-        # Строка
+        # String literal
         if self.match(TokenType.STRING):
             return StringExpr(value=tok.value, line=tok.line, col=tok.col)
 
-        # Булевы значения true / false
+        # Boolean: true / false
         if self.match(TokenType.TRUE):
             return BoolExpr(value=True, line=tok.line, col=tok.col)
         if self.match(TokenType.FALSE):
             return BoolExpr(value=False, line=tok.line, col=tok.col)
 
-        # Идентификатор / Переменная
+        # Identifier / Variable
         if self.match(TokenType.ID):
             return VarExpr(name=tok.value, line=tok.line, col=tok.col)
 
-        # Выражение в скобках (expr)
+        # Parenthesised expression: (expr)
         if self.match(TokenType.LPAREN):
             expr = self.parse_expr()
             self.expect(TokenType.RPAREN, "Expected ')'")
             return expr
 
-        # Литерал матрицы [1, 2 ; 3, 4]
+        # Matrix literal: [1, 2 ; 3, 4]
         if self.match(TokenType.LBRACKET):
             return self.parse_matrix_literal(tok)
 
@@ -438,15 +437,15 @@ class Parser:
             return MatrixLiteral(rows=[], line=start_tok.line, col=start_tok.col)
 
         while self.peek().type not in (TokenType.RBRACKET, TokenType.EOF):
-            # Парсим элемент строки
+            # Parse a row element
             elem = self.parse_expr()
             curr_row.append(elem)
 
-            # Разделители внутри строки матрицы: запятая или пробел
+            # Column separator: comma
             if self.match(TokenType.COMMA):
                 pass
 
-            # Разделитель строк матрицы: точка с запятой ';' или перевод строки
+            # Row separator: semicolon ';' or newline
             if self.match(TokenType.SEMICOLON) or self.peek().type == TokenType.NEWLINE:
                 if self.peek().type == TokenType.NEWLINE:
                     self.advance()

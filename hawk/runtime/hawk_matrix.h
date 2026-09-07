@@ -9,8 +9,8 @@
 
 /*
  * Hawk Matrix Runtime
- * Структура матрицы: плоский массив размером rows * cols
- * Индекс элемента (r, c) вычисляется как: r * cols + c
+ * Matrix structure: flat array of size rows * cols
+ * Element index (r, c) is computed as: r * cols + c
  */
 typedef struct {
     int rows;
@@ -18,7 +18,7 @@ typedef struct {
     double *data;
 } Matrix;
 
-/* Создание новой матрицы, заполненной нулями */
+/* Create a new zero-filled matrix */
 static inline Matrix* matrix_new(int rows, int cols) {
     Matrix *m = (Matrix*)malloc(sizeof(Matrix));
     if (!m) {
@@ -36,7 +36,7 @@ static inline Matrix* matrix_new(int rows, int cols) {
     return m;
 }
 
-/* Создание матрицы из существующего массива значений */
+/* Create a matrix from an existing data array */
 static inline Matrix* matrix_from_array(int rows, int cols, double *raw_data) {
     Matrix *m = matrix_new(rows, cols);
     for (int i = 0; i < rows * cols; i++) {
@@ -45,7 +45,7 @@ static inline Matrix* matrix_from_array(int rows, int cols, double *raw_data) {
     return m;
 }
 
-/* Освобождение памяти */
+/* Free matrix memory */
 static inline void matrix_free(Matrix *m) {
     if (m) {
         if (m->data) {
@@ -55,7 +55,7 @@ static inline void matrix_free(Matrix *m) {
     }
 }
 
-/* Получение элемента (r, c) */
+/* Get element (r, c) */
 static inline double matrix_get(Matrix *m, int r, int c) {
     if (r < 0 || r >= m->rows || c < 0 || c >= m->cols) {
         fprintf(stderr, "Hawk Error: Matrix index [%d, %d] out of bounds for %dx%d!\n",
@@ -65,7 +65,7 @@ static inline double matrix_get(Matrix *m, int r, int c) {
     return m->data[r * m->cols + c];
 }
 
-/* Установка элемента (r, c) */
+/* Set element (r, c) */
 static inline void matrix_set(Matrix *m, int r, int c, double val) {
     if (r < 0 || r >= m->rows || c < 0 || c >= m->cols) {
         fprintf(stderr, "Hawk Error: Matrix index [%d, %d] out of bounds for %dx%d!\n",
@@ -75,7 +75,7 @@ static inline void matrix_set(Matrix *m, int r, int c, double val) {
     m->data[r * m->cols + c] = val;
 }
 
-/* Транспонирование матрицы: (r, c) -> (c, r) */
+/* Transpose matrix: (r, c) -> (c, r) */
 static inline Matrix* matrix_transpose(Matrix *m) {
     Matrix *t = matrix_new(m->cols, m->rows);
     for (int r = 0; r < m->rows; r++) {
@@ -86,7 +86,7 @@ static inline Matrix* matrix_transpose(Matrix *m) {
     return t;
 }
 
-/* Матричное умножение: A (RxK) * B (KxC) -> Result (RxC) */
+/* Matrix multiplication: A (RxK) * B (KxC) -> Result (RxC) */
 static inline Matrix* matrix_mult(Matrix *a, Matrix *b) {
     if (a->cols != b->rows) {
         fprintf(stderr, "Hawk Error: Cannot multiply matrices of dimensions %dx%d and %dx%d!\n",
@@ -106,7 +106,7 @@ static inline Matrix* matrix_mult(Matrix *a, Matrix *b) {
     return res;
 }
 
-/* Сложение матриц */
+/* Matrix addition */
 static inline Matrix* matrix_add(Matrix *a, Matrix *b) {
     if (a->rows != b->rows || a->cols != b->cols) {
         fprintf(stderr, "Hawk Error: Matrix dimensions do not match for addition!\n");
@@ -119,7 +119,7 @@ static inline Matrix* matrix_add(Matrix *a, Matrix *b) {
     return res;
 }
 
-/* Вычитание матриц */
+/* Matrix subtraction */
 static inline Matrix* matrix_sub(Matrix *a, Matrix *b) {
     if (a->rows != b->rows || a->cols != b->cols) {
         fprintf(stderr, "Hawk Error: Matrix dimensions do not match for subtraction!\n");
@@ -132,7 +132,7 @@ static inline Matrix* matrix_sub(Matrix *a, Matrix *b) {
     return res;
 }
 
-/* Умножение матрицы на скаляр */
+/* Scalar multiplication */
 static inline Matrix* matrix_scale(Matrix *m, double s) {
     Matrix *res = matrix_new(m->rows, m->cols);
     for (int i = 0; i < m->rows * m->cols; i++) {
@@ -141,7 +141,7 @@ static inline Matrix* matrix_scale(Matrix *m, double s) {
     return res;
 }
 
-/* Определитель квадратной матрицы (det) */
+/* Determinant of a square matrix (det) */
 static inline double matrix_det(Matrix *m) {
     if (m->rows != m->cols) {
         fprintf(stderr, "Hawk Error: Determinant is only defined for square matrices!\n");
@@ -161,7 +161,7 @@ static inline double matrix_det(Matrix *m) {
         return a*(e*i - f*h) - b*(d*i - f*g) + c*(d*h - e*g);
     }
 
-    // Для n > 3: метод Гаусса с частичным выбором ведущего элемента
+    // For n > 3: Gaussian elimination with partial pivoting
     double *temp = (double*)malloc(sizeof(double) * n * n);
     for (int i = 0; i < n * n; i++) temp[i] = m->data[i];
 
@@ -197,7 +197,7 @@ static inline double matrix_det(Matrix *m) {
     return det;
 }
 
-/* Красивая печать матрицы */
+/* Pretty-print a matrix */
 static inline void matrix_print(Matrix *m) {
     printf("[");
     for (int r = 0; r < m->rows; r++) {
@@ -435,7 +435,7 @@ static inline void hawk_val_print(HawkVal v) {
     }
 }
 
-/* Ввод данных пользователем с авто-определением числа/строки (как в интерпретаторе Hawk) */
+/* Read user input, auto-detecting number or string (matches interpreter behavior) */
 static inline HawkVal hawk_input(const char *prompt) {
     if (prompt && strlen(prompt) > 0) {
         printf("%s", prompt);
@@ -447,7 +447,7 @@ static inline HawkVal hawk_input(const char *prompt) {
         while (len > 0 && (buffer[len - 1] == '\n' || buffer[len - 1] == '\r')) {
             buffer[--len] = '\0';
         }
-        // Проверяем, является ли ввод числом
+        // Check whether the input is a valid number
         char *start = buffer;
         while (*start == ' ' || *start == '\t') start++;
         if (*start != '\0') {
@@ -465,7 +465,7 @@ static inline HawkVal hawk_input(const char *prompt) {
     return hawk_val_str("");
 }
 
-/* Ввод строки пользователем (консольный prompt) */
+/* Read a string from the user (console prompt) */
 static inline char* hawk_input_str(const char *prompt) {
     if (prompt && strlen(prompt) > 0) {
         printf("%s", prompt);
@@ -482,7 +482,7 @@ static inline char* hawk_input_str(const char *prompt) {
     return strdup("");
 }
 
-/* Ввод числа пользователем */
+/* Read a number from the user */
 static inline double hawk_input_num(const char *prompt) {
     if (prompt && strlen(prompt) > 0) {
         printf("%s", prompt);
@@ -499,13 +499,13 @@ static inline double hawk_input_num(const char *prompt) {
  * Cross-Platform OS, System & Audio Functions
  * ============================================================ */
 
-/* Выполнить системную команду, вернуть код возврата */
+/* Execute a system command and return the exit code */
 static inline double hawk_system(const char *cmd) {
     if (!cmd) return 0.0;
     return (double)system(cmd);
 }
 
-/* Определить текущую ОС */
+/* Detect the current OS */
 static inline const char* hawk_os_name(void) {
 #if defined(_WIN32) || defined(_WIN64)
     return "windows";
@@ -516,10 +516,10 @@ static inline const char* hawk_os_name(void) {
 #endif
 }
 
-/* Звуковой сигнал (beep) */
+/* System bell signal (beep) */
 static inline void hawk_beep(void) {
 #if defined(_WIN32) || defined(_WIN64)
-    /* Windows: системный сигнал через MessageBeep (без winmm) */
+    /* Windows: system bell via printf (no winmm required) */
     printf("\a");
     fflush(stdout);
 #else
@@ -528,25 +528,25 @@ static inline void hawk_beep(void) {
 #endif
 }
 
-/* Воспроизвести аудиофайл (в фоне, не блокируя выполнение) */
+/* Play an audio file in the background (non-blocking) */
 static inline void hawk_play_sound(const char *path) {
     if (!path || strlen(path) == 0) return;
 
     char cmd[4096];
 
 #if defined(__APPLE__)
-    /* macOS: afplay в фоне */
+    /* macOS: use afplay in the background */
     snprintf(cmd, sizeof(cmd), "afplay \"%s\" &", path);
     system(cmd);
 #elif defined(_WIN32) || defined(_WIN64)
-    /* Windows: PowerShell SoundPlayer без блокировки */
+    /* Windows: PowerShell SoundPlayer (non-blocking) */
     snprintf(cmd, sizeof(cmd),
         "powershell -NoProfile -Command \""
         "(New-Object Media.SoundPlayer '%s').PlaySync()\" &",
         path);
     system(cmd);
 #else
-    /* Linux: paplay -> aplay -> play (sox) */
+    /* Linux: try paplay -> aplay -> play (sox) */
     snprintf(cmd, sizeof(cmd),
         "(paplay \"%s\" 2>/dev/null || aplay \"%s\" 2>/dev/null || play \"%s\" 2>/dev/null) &",
         path, path, path);

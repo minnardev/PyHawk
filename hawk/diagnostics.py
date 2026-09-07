@@ -1,6 +1,6 @@
 """
 🦅 PyHawk Diagnostics & Linter Engine
-Предоставляет диагностику ошибок синтаксиса в формате JSON для VS Code.
+Provides syntax error diagnostics in JSON format for VS Code.
 """
 
 import re
@@ -13,10 +13,10 @@ from hawk.parser import Parser
 def _extract_line_col(msg: str) -> Tuple[int, int]:
     line = 1
     col = 1
-    m_line = re.search(r'line\s*(\d+)', msg, re.I) or re.search(r'строке?\s*(\d+)', msg)
+    m_line = re.search(r'line\s*(\d+)', msg, re.I) or re.search(r'line\s*(\d+)', msg, re.I)
     if m_line:
         line = int(m_line.group(1))
-    m_col = re.search(r'col(?:umn)?\s*(\d+)', msg, re.I) or re.search(r'столбец\s*(\d+)', msg)
+    m_col = re.search(r'col(?:umn)?\s*(\d+)', msg, re.I) or re.search(r'col(?:umn)?\s*(\d+)', msg, re.I)
     if m_col:
         col = int(m_col.group(1))
     return line, col
@@ -25,7 +25,7 @@ def _extract_line_col(msg: str) -> Tuple[int, int]:
 def analyze(code: str) -> List[Dict[str, Any]]:
     diagnostics: List[Dict[str, Any]] = []
 
-    # 1. Токенизация (Лексический анализ)
+    # 1. Tokenization (Lexical analysis)
     try:
         lexer = Lexer(code)
         tokens = lexer.tokenize()
@@ -58,7 +58,7 @@ def analyze(code: str) -> List[Dict[str, Any]]:
         })
         return diagnostics
 
-    # 2. Синтаксический анализ (Парсинг AST)
+    # 2. Syntax analysis (AST parsing)
     try:
         parser = Parser(tokens)
         parser.parse()
