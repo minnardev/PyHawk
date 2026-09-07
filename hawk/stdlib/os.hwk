@@ -1,12 +1,11 @@
-# os.hwk — Hawk Standard Library: OS Utilities
-# Cross-platform OS helpers: macOS, Linux, Windows
+# os.hwk — Hawk Standard Library: OS
+# Cross-platform: macOS, Linux, Windows
+# Covers: system info, files, directories, processes, sleep, open
+
+# ==================== SYSTEM INFO ====================
 
 fn current_os() {
     return os_name()
-}
-
-fn exec(cmd) {
-    return system(cmd)
 }
 
 fn is_macos() {
@@ -28,4 +27,177 @@ fn is_windows() {
         return true
     }
     return false
+}
+
+# ==================== FILE OPERATIONS ====================
+
+fn file_exists(path) {
+    if (os_name() = "windows") {
+        if (system("if exist \"" + path + "\" (exit 0) else (exit 1)") = 0) {
+            return true
+        }
+        return false
+    }
+    if (system("test -f \"" + path + "\"") = 0) {
+        return true
+    }
+    return false
+}
+
+fn file_delete(path) {
+    if (os_name() = "windows") {
+        return system("del /f /q \"" + path + "\"")
+    }
+    return system("rm -f \"" + path + "\"")
+}
+
+fn file_copy(src, dst) {
+    if (os_name() = "windows") {
+        return system("copy /y \"" + src + "\" \"" + dst + "\"")
+    }
+    return system("cp \"" + src + "\" \"" + dst + "\"")
+}
+
+fn file_move(src, dst) {
+    if (os_name() = "windows") {
+        return system("move /y \"" + src + "\" \"" + dst + "\"")
+    }
+    return system("mv \"" + src + "\" \"" + dst + "\"")
+}
+
+fn file_write(path, content) {
+    if (os_name() = "windows") {
+        return system("echo " + content + " > \"" + path + "\"")
+    }
+    return system("printf '%s' \"" + content + "\" > \"" + path + "\"")
+}
+
+fn file_append(path, content) {
+    if (os_name() = "windows") {
+        return system("echo " + content + " >> \"" + path + "\"")
+    }
+    return system("printf '%s\n' \"" + content + "\" >> \"" + path + "\"")
+}
+
+fn file_print(path) {
+    if (os_name() = "windows") {
+        return system("type \"" + path + "\"")
+    }
+    return system("cat \"" + path + "\"")
+}
+
+fn file_size(path) {
+    if (os_name() = "macos") {
+        return system("stat -f%z \"" + path + "\"")
+    }
+    if (os_name() = "linux") {
+        return system("stat -c%s \"" + path + "\"")
+    }
+    return system("for %F in (\"" + path + "\") do @echo %~zF")
+}
+
+# ==================== DIRECTORY OPERATIONS ====================
+
+fn dir_exists(path) {
+    if (os_name() = "windows") {
+        if (system("if exist \"" + path + "\\\" (exit 0) else (exit 1)") = 0) {
+            return true
+        }
+        return false
+    }
+    if (system("test -d \"" + path + "\"") = 0) {
+        return true
+    }
+    return false
+}
+
+fn dir_create(path) {
+    if (os_name() = "windows") {
+        return system("mkdir \"" + path + "\"")
+    }
+    return system("mkdir -p \"" + path + "\"")
+}
+
+fn dir_delete(path) {
+    if (os_name() = "windows") {
+        return system("rmdir /s /q \"" + path + "\"")
+    }
+    return system("rm -rf \"" + path + "\"")
+}
+
+fn dir_list(path) {
+    if (os_name() = "windows") {
+        return system("dir \"" + path + "\"")
+    }
+    return system("ls -la \"" + path + "\"")
+}
+
+fn get_cwd() {
+    if (os_name() = "windows") {
+        return system("cd")
+    }
+    return system("pwd")
+}
+
+fn get_home() {
+    if (os_name() = "windows") {
+        return system("echo %USERPROFILE%")
+    }
+    return system("echo $HOME")
+}
+
+# ==================== PROCESSES ====================
+
+fn exec(cmd) {
+    return system(cmd)
+}
+
+fn exec_bg(cmd) {
+    if (os_name() = "windows") {
+        return system("start /b " + cmd)
+    }
+    return system(cmd + " &")
+}
+
+fn sleep(seconds) {
+    if (os_name() = "windows") {
+        return system("timeout /t " + seconds + " /nobreak > nul")
+    }
+    return system("sleep " + seconds)
+}
+
+fn kill_pid(pid) {
+    if (os_name() = "windows") {
+        return system("taskkill /f /pid " + pid)
+    }
+    return system("kill " + pid)
+}
+
+fn process_list() {
+    if (os_name() = "windows") {
+        return system("tasklist")
+    }
+    return system("ps aux")
+}
+
+# ==================== OPEN FILES & URLS ====================
+
+fn open_file(path) {
+    if (os_name() = "macos") {
+        return system("open \"" + path + "\"")
+    }
+    if (os_name() = "windows") {
+        return system("start \"\" \"" + path + "\"")
+    }
+    return system("xdg-open \"" + path + "\" &")
+}
+
+fn open_url(url) {
+    if (os_name() = "macos") {
+        return system("open \"" + url + "\"")
+    }
+    if (os_name() = "windows") {
+        return system("start \"\" \"" + url + "\"")
+    }
+    return system("xdg-open \"" + url + "\" &")
 }
