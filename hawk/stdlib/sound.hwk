@@ -1,7 +1,15 @@
 # sound.hwk — Hawk Standard Library: Sound
-# Cross-platform audio: macOS, Linux, Windows
+# Cross-platform audio playback for macOS, Linux, and Windows.
+#
+# Usage: import sound
+#
+# Functions:
+#   play(file)    — play an audio file in the background
+#   alert()       — system bell signal
+#   sound_beep()  — alias for alert()
 
 fn play(file) {
+    # Play an audio file in the background (non-blocking)
     set os = os_name()
     if (os = "macos") {
         system("afplay \"" + file + "\" &")
@@ -15,9 +23,11 @@ fn play(file) {
 }
 
 fn alert() {
+    # System bell signal
     beep()
 }
 
 fn sound_beep() {
+    # Alias for alert()
     beep()
 }

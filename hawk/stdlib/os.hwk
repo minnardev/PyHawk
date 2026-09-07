@@ -1,6 +1,15 @@
 # os.hwk — Hawk Standard Library: OS
-# Cross-platform: macOS, Linux, Windows
-# Covers: system info, files, directories, processes, sleep, open
+# Cross-platform OS interface for macOS, Linux, and Windows.
+#
+# Usage: import os
+#
+# Functions:
+#   current_os()          — returns "macos", "linux" or "windows"
+#   is_macos/linux/windows() — platform checks
+#   file_exists/write/append/print/copy/move/delete/size
+#   dir_exists/create/delete/list, get_cwd, get_home
+#   exec, exec_bg, sleep, kill_pid, process_list
+#   open_file, open_url
 
 # ==================== SYSTEM INFO ====================
 
