@@ -169,6 +169,8 @@ class Lexer:
                         escaped = self.advance()
                         if escaped == "n": s_chars.append("\n")
                         elif escaped == "t": s_chars.append("\t")
+                        elif escaped == "r": s_chars.append("\r")
+                        elif escaped == "e": s_chars.append("\x1b")   # ESC — for ANSI color codes
                         elif escaped == '"': s_chars.append('"')
                         elif escaped == "\\": s_chars.append("\\")
                         else: s_chars.append(escaped)

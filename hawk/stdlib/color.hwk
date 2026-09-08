@@ -1,0 +1,108 @@
+# color.hwk — Hawk Standard Library: Terminal Colors & Formatting
+# Uses ANSI escape codes. Works on macOS, Linux, and Windows Terminal.
+#
+# Usage: import color
+#
+# Color functions wrap text and return a colored string:
+#   print red("Error!")
+#   print green("OK")
+#   print bold(blue("Header"))
+
+# ==================== TEXT COLORS ====================
+
+fn red(text) {
+    return "\e[31m" + text + "\e[0m"
+}
+
+fn green(text) {
+    return "\e[32m" + text + "\e[0m"
+}
+
+fn yellow(text) {
+    return "\e[33m" + text + "\e[0m"
+}
+
+fn blue(text) {
+    return "\e[34m" + text + "\e[0m"
+}
+
+fn magenta(text) {
+    return "\e[35m" + text + "\e[0m"
+}
+
+fn cyan(text) {
+    return "\e[36m" + text + "\e[0m"
+}
+
+fn white(text) {
+    return "\e[97m" + text + "\e[0m"
+}
+
+fn gray(text) {
+    return "\e[90m" + text + "\e[0m"
+}
+
+# ==================== TEXT STYLES ====================
+
+fn bold(text) {
+    return "\e[1m" + text + "\e[0m"
+}
+
+fn dim(text) {
+    return "\e[2m" + text + "\e[0m"
+}
+
+fn italic(text) {
+    return "\e[3m" + text + "\e[0m"
+}
+
+fn underline(text) {
+    return "\e[4m" + text + "\e[0m"
+}
+
+fn blink(text) {
+    return "\e[5m" + text + "\e[0m"
+}
+
+fn strikethrough(text) {
+    return "\e[9m" + text + "\e[0m"
+}
+
+# ==================== BACKGROUND COLORS ====================
+
+fn bg_red(text) {
+    return "\e[41m" + text + "\e[0m"
+}
+
+fn bg_green(text) {
+    return "\e[42m" + text + "\e[0m"
+}
+
+fn bg_yellow(text) {
+    return "\e[43m" + text + "\e[0m"
+}
+
+fn bg_blue(text) {
+    return "\e[44m" + text + "\e[0m"
+}
+
+fn bg_magenta(text) {
+    return "\e[45m" + text + "\e[0m"
+}
+
+fn bg_cyan(text) {
+    return "\e[46m" + text + "\e[0m"
+}
+
+# ==================== RESET ====================
+
+fn reset() {
+    return "\e[0m"
+}
+
+# ==================== TERMINAL CONTROL ====================
+
+fn clear() {
+    # Clear the terminal screen
+    system("clear 2>/dev/null || cls 2>/dev/null || true")
+}

@@ -1,4 +1,4 @@
-/* 🦅 Сгенерировано компилятором Hawk v0.1 */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -11,16 +11,13 @@
 #define pi M_PI
 #define e 2.71828182845904523536
 
-/* --- Прототипы пользовательских функций --- */
 double f(double x);
 
-/* --- Реализации пользовательских функций --- */
 double f(double x) {
     return ((2.0 * x) + 1.0);
     return 0.0;
 }
 
-/* --- Точка входа программы --- */
 int main(int argc, char **argv) {
     double r = 5.0;
     double S = (pi * pow(r, 2.0));

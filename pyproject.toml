@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyhawk"
-version = "0.1.0"
+version = "0.3.1"
 description = "PyHawk Programming Language — Sharp as a hawk, fast as math (Python Prototype)"
 readme = "README.md"
 requires-python = ">=3.8"

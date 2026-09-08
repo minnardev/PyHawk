@@ -1,0 +1,87 @@
+# time.hwk — Hawk Standard Library: Time & Date
+# Cross-platform time utilities via system calls.
+#
+# Usage: import time
+#
+# Functions:
+#   now()          — print current date and time
+#   today()        — print current date only
+#   clock()        — print current time only (HH:MM:SS)
+#   timestamp()    — print Unix timestamp (seconds since 1970)
+#   sleep(s)       — pause for s seconds (re-exported from os)
+
+# ==================== DATE & TIME ====================
+
+fn now() {
+    # Print current date and time: 2026-09-08 21:37:05
+    if (os_name() = "windows") {
+        system("echo %DATE% %TIME%")
+    }
+    system("date '+%Y-%m-%d %H:%M:%S'")
+}
+
+fn today() {
+    # Print current date: 2026-09-08
+    if (os_name() = "windows") {
+        system("echo %DATE%")
+    }
+    system("date '+%Y-%m-%d'")
+}
+
+fn clock() {
+    # Print current time: 21:37:05
+    if (os_name() = "windows") {
+        system("echo %TIME%")
+    }
+    system("date '+%H:%M:%S'")
+}
+
+fn timestamp() {
+    # Print Unix timestamp (integer seconds since 1970-01-01)
+    if (os_name() = "windows") {
+        system("powershell -NoProfile -Command \"[int][double]::Parse((Get-Date -UFormat %s))\"")
+    }
+    system("date +%s")
+}
+
+fn day_of_week() {
+    # Print the current day name: Monday, Tuesday, ...
+    if (os_name() = "windows") {
+        system("powershell -NoProfile -Command \"(Get-Date).DayOfWeek\"")
+    }
+    system("date '+%A'")
+}
+
+fn month() {
+    # Print the current month name: January, February, ...
+    if (os_name() = "windows") {
+        system("powershell -NoProfile -Command \"(Get-Date).ToString('MMMM')\"")
+    }
+    system("date '+%B'")
+}
+
+fn year() {
+    # Print the current year: 2026
+    if (os_name() = "windows") {
+        system("powershell -NoProfile -Command \"(Get-Date).Year\"")
+    }
+    system("date '+%Y'")
+}
+
+fn time_since(start) {
+    # Print elapsed seconds since a Unix timestamp (use with timestamp())
+    if (os_name() = "windows") {
+        system("powershell -NoProfile -Command \"[int][double]::Parse((Get-Date -UFormat %s)) - " + start + "\"")
+    }
+    system("echo $(($(date +%s) - " + start + "))")
+}
+
+# ==================== SLEEP ====================
+
+fn sleep(seconds) {
+    # Pause execution for the given number of seconds
+    if (os_name() = "windows") {
+        system("timeout /t " + seconds + " /nobreak > nul")
+    }
+    system("sleep " + seconds)
+}
