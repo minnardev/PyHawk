@@ -6,4 +6,4 @@ from .parser import Parser
 from .interpreter import Interpreter, HawkMatrix
 from .transpiler import CTranspiler
 
-__version__ = "0.1.0"
+__version__ = "0.3.1"
