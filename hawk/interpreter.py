@@ -165,6 +165,9 @@ class Interpreter:
             return self.exec_block(stmts, self.globals)
         except ReturnSignal as r:
             return r.value
+        except KeyboardInterrupt:
+            print("")
+            raise SystemExit(130)
 
     def exec_block(self, stmts: List[Stmt], env: Environment) -> Any:
         res = None
