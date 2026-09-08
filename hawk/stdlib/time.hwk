@@ -1,79 +1,84 @@
 # time.hwk — Hawk Standard Library: Time & Date
-# Cross-platform time utilities via system calls.
+# Cross-platform. Functions RETURN strings (can be stored in variables).
 #
 # Usage: import time
 #
-# Functions:
-#   now()          — print current date and time
-#   today()        — print current date only
-#   clock()        — print current time only (HH:MM:SS)
-#   timestamp()    — print Unix timestamp (seconds since 1970)
-#   sleep(s)       — pause for s seconds (re-exported from os)
+# Example:
+#   set t = now()
+#   print t          # 2026-09-08 22:03:16
 
-# ==================== DATE & TIME ====================
+# ==================== DATE & TIME (return values) ====================
 
 fn now() {
-    # Print current date and time: 2026-09-08 21:37:05
+    # Return current date and time as string: "2026-09-08 22:03:16"
     if (os_name() = "windows") {
-        system("echo %DATE% %TIME%")
+        return shell_output("powershell -NoProfile -Command \"Get-Date -Format 'yyyy-MM-dd HH:mm:ss'\"")
     }
-    system("date '+%Y-%m-%d %H:%M:%S'")
+    return shell_output("date '+%Y-%m-%d %H:%M:%S'")
 }
 
 fn today() {
-    # Print current date: 2026-09-08
+    # Return current date as string: "2026-09-08"
     if (os_name() = "windows") {
-        system("echo %DATE%")
+        return shell_output("powershell -NoProfile -Command \"Get-Date -Format 'yyyy-MM-dd'\"")
     }
-    system("date '+%Y-%m-%d'")
+    return shell_output("date '+%Y-%m-%d'")
 }
 
 fn clock() {
-    # Print current time: 21:37:05
+    # Return current time as string: "22:03:16"
     if (os_name() = "windows") {
-        system("echo %TIME%")
+        return shell_output("powershell -NoProfile -Command \"Get-Date -Format 'HH:mm:ss'\"")
     }
-    system("date '+%H:%M:%S'")
+    return shell_output("date '+%H:%M:%S'")
 }
 
 fn timestamp() {
-    # Print Unix timestamp (integer seconds since 1970-01-01)
+    # Return Unix timestamp as string: "1788885830"
     if (os_name() = "windows") {
-        system("powershell -NoProfile -Command \"[int][double]::Parse((Get-Date -UFormat %s))\"")
+        return shell_output("powershell -NoProfile -Command \"[int][double]::Parse((Get-Date -UFormat %s))\"")
     }
-    system("date +%s")
+    return shell_output("date +%s")
 }
 
 fn day_of_week() {
-    # Print the current day name: Monday, Tuesday, ...
+    # Return current day name: "Monday", "Tuesday", ...
     if (os_name() = "windows") {
-        system("powershell -NoProfile -Command \"(Get-Date).DayOfWeek\"")
+        return shell_output("powershell -NoProfile -Command \"(Get-Date).DayOfWeek.ToString()\"")
     }
-    system("date '+%A'")
+    return shell_output("date '+%A'")
 }
 
 fn month() {
-    # Print the current month name: January, February, ...
+    # Return current month name: "January", "September", ...
     if (os_name() = "windows") {
-        system("powershell -NoProfile -Command \"(Get-Date).ToString('MMMM')\"")
+        return shell_output("powershell -NoProfile -Command \"(Get-Date).ToString('MMMM')\"")
     }
-    system("date '+%B'")
+    return shell_output("date '+%B'")
 }
 
 fn year() {
-    # Print the current year: 2026
+    # Return current year as string: "2026"
     if (os_name() = "windows") {
-        system("powershell -NoProfile -Command \"(Get-Date).Year\"")
+        return shell_output("powershell -NoProfile -Command \"(Get-Date).Year\"")
     }
-    system("date '+%Y'")
+    return shell_output("date '+%Y'")
 }
 
-fn time_since(start) {
-    # Print elapsed seconds since a Unix timestamp (use with timestamp())
+fn hour() {
+    # Return current hour: "22"
     if (os_name() = "windows") {
-        system("powershell -NoProfile -Command \"[int][double]::Parse((Get-Date -UFormat %s)) - " + start + "\"")
+        return shell_output("powershell -NoProfile -Command \"(Get-Date).Hour\"")
     }
-    system("echo $(($(date +%s) - " + start + "))")
+    return shell_output("date '+%H'")
+}
+
+fn minute() {
+    # Return current minute: "03"
+    if (os_name() = "windows") {
+        return shell_output("powershell -NoProfile -Command \"(Get-Date).Minute\"")
+    }
+    return shell_output("date '+%M'")
 }
 
 # ==================== SLEEP ====================

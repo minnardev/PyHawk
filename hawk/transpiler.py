@@ -476,6 +476,9 @@ class CTranspiler:
             if expr.callee == "system":
                 arg_code = self.transpile_expr(expr.args[0])[0] if expr.args else '""'
                 return (f"hawk_system({arg_code})", "double")
+            if expr.callee == "shell_output":
+                arg_code = self.transpile_expr(expr.args[0])[0] if expr.args else '""'
+                return (f"hawk_shell_output({arg_code})", "char*")
             if expr.callee == "os_name":
                 return ("hawk_os_name()", "char*")
             if expr.callee == "beep":

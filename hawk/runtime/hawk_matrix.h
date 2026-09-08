@@ -505,6 +505,27 @@ static inline double hawk_system(const char *cmd) {
     return (double)system(cmd);
 }
 
+/* Run a shell command and return its stdout as a string (trims trailing newline) */
+static inline char* hawk_shell_output(const char *cmd) {
+    static char _shell_buf[4096];
+    _shell_buf[0] = '\0';
+    if (!cmd) return _shell_buf;
+    FILE *fp = popen(cmd, "r");
+    if (!fp) return _shell_buf;
+    size_t len = 0;
+    while (len < sizeof(_shell_buf) - 1) {
+        int c = fgetc(fp);
+        if (c == EOF) break;
+        _shell_buf[len++] = (char)c;
+    }
+    pclose(fp);
+    /* Strip trailing newline/whitespace */
+    while (len > 0 && (_shell_buf[len-1] == '\n' || _shell_buf[len-1] == '\r'))
+        len--;
+    _shell_buf[len] = '\0';
+    return _shell_buf;
+}
+
 /* Detect the current OS */
 static inline const char* hawk_os_name(void) {
 #if defined(_WIN32) || defined(_WIN64)
