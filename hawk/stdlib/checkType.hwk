@@ -1,0 +1,53 @@
+# checkType.hwk — Hawk Standard Library: Type Checking
+# Requires typeof() built-in (PyHawk v0.3.1+)
+#
+# Usage: import checkType
+#
+# Functions:
+#   type_of(x)      — returns "number", "string", "boolean" or "matrix"
+#   is_number(x)    — true if x is a number
+#   is_string(x)    — true if x is a string
+#   is_bool(x)      — true if x is a boolean
+#   is_matrix(x)    — true if x is a matrix
+#   assert_type(x, expected) — print error if type doesn't match
+
+fn type_of(x) {
+    return typeof(x)
+}
+
+fn is_number(x) {
+    if (typeof(x) = "number") {
+        return true
+    }
+    return false
+}
+
+fn is_string(x) {
+    if (typeof(x) = "string") {
+        return true
+    }
+    return false
+}
+
+fn is_bool(x) {
+    if (typeof(x) = "boolean") {
+        return true
+    }
+    return false
+}
+
+fn is_matrix(x) {
+    if (typeof(x) = "matrix") {
+        return true
+    }
+    return false
+}
+
+fn assert_type(x, expected) {
+    set t = typeof(x)
+    if (t = expected) {
+        return true
+    }
+    print "TypeError: expected " + expected + ", got " + t
+    return false
+}

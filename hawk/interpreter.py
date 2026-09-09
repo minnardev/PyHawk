@@ -453,6 +453,21 @@ class Interpreter:
                 except subprocess.CalledProcessError as e:
                     return (e.output or "").strip()
 
+            if expr.callee == "typeof":
+                # Return the type of a value as a string
+                if not args:
+                    return "null"
+                val = args[0]
+                if isinstance(val, HawkMatrix):
+                    return "matrix"
+                if isinstance(val, bool):
+                    return "boolean"
+                if isinstance(val, (int, float)):
+                    return "number"
+                if isinstance(val, str):
+                    return "string"
+                return "unknown"
+
             if expr.callee == "os_name":
                 if sys.platform.startswith("darwin"):
                     return "macos"
