@@ -1,92 +1,68 @@
 # time.hwk — Hawk Standard Library: Time & Date
-# Cross-platform. Functions RETURN strings (can be stored in variables).
+# Cross-platform. All functions use a Python backend so
+# formatting is stable regardless of system locale.
 #
 # Usage: import time
 #
 # Example:
 #   set t = now()
 #   print t          # 2026-09-08 22:03:16
+#   set ts = timestamp()  # 1788885830 (number)
 
-# ==================== DATE & TIME (return values) ====================
+# ==================== INTERNAL HELPERS ====================
+
+fn _py(cmd) {
+    set py = "python3"
+    if (os_name() = "windows") {
+        set py = "python"
+    }
+    return shell_output(py + " -c \"" + cmd + "\"")
+}
+
+# ==================== DATE & TIME ====================
 
 fn now() {
-    # Return current date and time as string: "2026-09-08 22:03:16"
-    if (os_name() = "windows") {
-        return shell_output("powershell -NoProfile -Command \"Get-Date -Format 'yyyy-MM-dd HH:mm:ss'\"")
-    }
-    return shell_output("date '+%Y-%m-%d %H:%M:%S'")
+    return _py("import datetime; print(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))")
 }
 
 fn today() {
-    # Return current date as string: "2026-09-08"
-    if (os_name() = "windows") {
-        return shell_output("powershell -NoProfile -Command \"Get-Date -Format 'yyyy-MM-dd'\"")
-    }
-    return shell_output("date '+%Y-%m-%d'")
+    return _py("import datetime; print(datetime.date.today().isoformat())")
 }
 
 fn clock() {
-    # Return current time as string: "22:03:16"
-    if (os_name() = "windows") {
-        return shell_output("powershell -NoProfile -Command \"Get-Date -Format 'HH:mm:ss'\"")
-    }
-    return shell_output("date '+%H:%M:%S'")
+    return _py("import datetime; print(datetime.datetime.now().strftime('%H:%M:%S'))")
 }
 
 fn timestamp() {
-    # Return Unix timestamp as string: "1788885830"
-    if (os_name() = "windows") {
-        return shell_output("powershell -NoProfile -Command \"[int][double]::Parse((Get-Date -UFormat %s))\"")
-    }
-    return shell_output("date +%s")
+    return to_number(_py("import time; print(int(time.time()))"))
 }
 
 fn day_of_week() {
-    # Return current day name: "Monday", "Tuesday", ...
-    if (os_name() = "windows") {
-        return shell_output("powershell -NoProfile -Command \"(Get-Date).DayOfWeek.ToString()\"")
-    }
-    return shell_output("date '+%A'")
+    return _py("import datetime; print(datetime.datetime.now().strftime('%A'))")
 }
 
 fn month() {
-    # Return current month name: "January", "September", ...
-    if (os_name() = "windows") {
-        return shell_output("powershell -NoProfile -Command \"(Get-Date).ToString('MMMM')\"")
-    }
-    return shell_output("date '+%B'")
+    return _py("import datetime; print(datetime.datetime.now().strftime('%B'))")
 }
 
 fn year() {
-    # Return current year as string: "2026"
-    if (os_name() = "windows") {
-        return shell_output("powershell -NoProfile -Command \"(Get-Date).Year\"")
-    }
-    return shell_output("date '+%Y'")
+    return _py("import datetime; print(datetime.datetime.now().strftime('%Y'))")
 }
 
 fn hour() {
-    # Return current hour: "22"
-    if (os_name() = "windows") {
-        return shell_output("powershell -NoProfile -Command \"(Get-Date).Hour\"")
-    }
-    return shell_output("date '+%H'")
+    return _py("import datetime; print(datetime.datetime.now().strftime('%H'))")
 }
 
 fn minute() {
-    # Return current minute: "03"
-    if (os_name() = "windows") {
-        return shell_output("powershell -NoProfile -Command \"(Get-Date).Minute\"")
-    }
-    return shell_output("date '+%M'")
+    return _py("import datetime; print(datetime.datetime.now().strftime('%M'))")
 }
 
 # ==================== SLEEP ====================
+# Renamed to sleep_seconds to avoid shadowing the built-in sleep()
 
-fn sleep(seconds) {
-    # Pause execution for the given number of seconds
+fn sleep_seconds(seconds) {
     if (os_name() = "windows") {
-        system("timeout /t " + seconds + " /nobreak > nul")
+        return system("timeout /t " + seconds + " /nobreak > nul")
     }
-    system("sleep " + seconds)
+    return system("sleep " + seconds)
 }

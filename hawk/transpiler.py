@@ -516,6 +516,9 @@ class CTranspiler:
             if expr.callee == "play_sound":
                 arg_code = self.transpile_expr(expr.args[0])[0] if expr.args else '""'
                 return (f"(hawk_play_sound({arg_code}), 0.0)", "double")
+            if expr.callee == "to_number":
+                arg_code = self.transpile_expr(expr.args[0])[0] if expr.args else '""'
+                return (f"atof({arg_code})", "double")
 
             # User functions
             args_c = []

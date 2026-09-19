@@ -4,12 +4,13 @@
 # Usage: import checkType
 #
 # Functions:
-#   type_of(x)      — returns "number", "string", "boolean" or "matrix"
+#   type_of(x)      — returns "number", "string", "boolean", "matrix" or "null"
 #   is_number(x)    — true if x is a number
 #   is_string(x)    — true if x is a string
 #   is_bool(x)      — true if x is a boolean
 #   is_matrix(x)    — true if x is a matrix
-#   assert_type(x, expected) — print error if type doesn't match
+#   is_null(x)      — true if x is null / undefined
+#   check_type(x, expected) — print error if type doesn't match, return false
 
 fn type_of(x) {
     return typeof(x)
@@ -43,7 +44,15 @@ fn is_matrix(x) {
     return false
 }
 
-fn assert_type(x, expected) {
+fn is_null(x) {
+    set t = typeof(x)
+    if (t = "null") {
+        return true
+    }
+    return false
+}
+
+fn check_type(x, expected) {
     set t = typeof(x)
     if (t = expected) {
         return true

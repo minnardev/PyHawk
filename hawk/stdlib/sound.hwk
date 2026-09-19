@@ -5,29 +5,11 @@
 #
 # Functions:
 #   play(file)    — play an audio file in the background
-#   alert()       — system bell signal
-#   sound_beep()  — alias for alert()
+#
+# Note: beep() is a built-in core function, available globally.
+#       play_sound(path) is also built-in; sound.play() is kept
+#       for backward compatibility and delegates to play_sound().
 
 fn play(file) {
-    # Play an audio file in the background (non-blocking)
-    set os = os_name()
-    if (os = "macos") {
-        system("afplay \"" + file + "\" &")
-    }
-    if (os = "linux") {
-        system("(paplay \"" + file + "\" 2>/dev/null || aplay \"" + file + "\" 2>/dev/null || play \"" + file + "\" 2>/dev/null) &")
-    }
-    if (os = "windows") {
-        system("powershell -NoProfile -Command \"(New-Object Media.SoundPlayer '" + file + "').Play()\"")
-    }
-}
-
-fn alert() {
-    # System bell signal
-    beep()
-}
-
-fn sound_beep() {
-    # Alias for alert()
-    beep()
+    play_sound(file)
 }

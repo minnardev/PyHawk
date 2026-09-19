@@ -508,7 +508,6 @@ class Interpreter:
                     except Exception:
                         pass
                 else:
-                    # Linux: try paplay, then aplay, then play (sox)
                     for player in ["paplay", "aplay", "play"]:
                         try:
                             subprocess.Popen([player, path],
@@ -518,6 +517,13 @@ class Interpreter:
                         except FileNotFoundError:
                             continue
                 return None
+
+            if expr.callee == "to_number":
+                val = str(args[0]) if args else ""
+                try:
+                    return float(val)
+                except (ValueError, TypeError):
+                    return 0.0
 
             # User-defined functions
             if expr.callee in self.functions:
