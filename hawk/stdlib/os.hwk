@@ -1,158 +1,212 @@
 # os.hwk — Hawk Standard Library: OS
 # Cross-platform OS interface for macOS, Linux, and Windows.
 #
-# Usage: import os
+# Usage: import "os"
 #
-# Functions:
-#   current_os()          — returns "macos", "linux" or "windows"
-#   is_macos/linux/windows() — platform checks
-#   file_exists/write/append/print/copy/move/delete/size
-#   dir_exists/create/delete/list, get_cwd, get_home
-#   exec, exec_bg, sleep, kill_pid, process_list
-#   open_file, open_url
+# All paths are strings. Paths with spaces are supported.
+# File content is handled via a Python backend to safely
+# process any characters (heredoc on Unix, argv on Windows).
 
-# ==================== SYSTEM INFO ====================
+# ==================== INTERNAL HELPERS ====================
+
+fn _q(s) {
+    return "\"" + s + "\""
+}
+
+fn _py(cmd) {
+    set py = "python3"
+    if (current_os() = "windows") {
+        set py = "python"
+    }
+    return shell_output(py + " -c \"" + cmd + "\"")
+}
+
+fn _py1(cmd, a) {
+    set py = "python3"
+    if (current_os() = "windows") {
+        set py = "python"
+    }
+    return shell_output(py + " -c \"" + cmd + "\" " + _q(a))
+}
+
+fn _py2(cmd, a, b) {
+    set py = "python3"
+    if (current_os() = "windows") {
+        set py = "python"
+    }
+    return shell_output(py + " -c \"" + cmd + "\" " + _q(a) + " " + _q(b))
+}
+
+fn _ok(result) {
+    if (result = 0) {
+        return true
+    }
+    return false
+}
+
+# ==================== PLATFORM ====================
 
 fn current_os() {
     return os_name()
 }
 
 fn is_macos() {
-    if (os_name() = "macos") {
-        return true
-    }
-    return false
+    return os_name() = "macos"
 }
 
 fn is_linux() {
-    if (os_name() = "linux") {
-        return true
-    }
-    return false
+    return os_name() = "linux"
 }
 
 fn is_windows() {
-    if (os_name() = "windows") {
-        return true
-    }
-    return false
+    return os_name() = "windows"
+}
+
+# ==================== PATH UTILITIES ====================
+
+fn path_join(a, b) {
+    return _py2("import os, sys; print(os.path.join(sys.argv[1], sys.argv[2]))", a, b)
+}
+
+fn path_dir(p) {
+    return _py1("import os, sys; print(os.path.dirname(sys.argv[1]))", p)
+}
+
+fn path_file(p) {
+    return _py1("import os, sys; print(os.path.basename(sys.argv[1]))", p)
+}
+
+fn path_stem(p) {
+    return _py1("import os, sys; print(os.path.splitext(os.path.basename(sys.argv[1]))[0])", p)
+}
+
+fn path_ext(p) {
+    return _py1("import os, sys; print(os.path.splitext(sys.argv[1])[1])", p)
+}
+
+fn path_abs(p) {
+    return _py1("import os, sys; print(os.path.abspath(sys.argv[1]))", p)
+}
+
+fn path_norm(p) {
+    return _py1("import os, sys; print(os.path.normpath(sys.argv[1]))", p)
 }
 
 # ==================== FILE OPERATIONS ====================
 
 fn file_exists(path) {
-    if (os_name() = "windows") {
-        if (system("if exist \"" + path + "\" (exit 0) else (exit 1)") = 0) {
-            return true
-        }
-        return false
-    }
-    if (system("test -f \"" + path + "\"") = 0) {
-        return true
-    }
-    return false
+    return _py1("import os, sys; print(os.path.exists(sys.argv[1]))", path) = "True"
 }
 
-fn file_delete(path) {
-    if (os_name() = "windows") {
-        return system("del /f /q \"" + path + "\"")
-    }
-    return system("rm -f \"" + path + "\"")
+fn file_is_file(path) {
+    return _py1("import os, sys; print(os.path.isfile(sys.argv[1]))", path) = "True"
 }
 
-fn file_copy(src, dst) {
-    if (os_name() = "windows") {
-        return system("copy /y \"" + src + "\" \"" + dst + "\"")
-    }
-    return system("cp \"" + src + "\" \"" + dst + "\"")
+fn file_is_dir(path) {
+    return _py1("import os, sys; print(os.path.isdir(sys.argv[1]))", path) = "True"
 }
 
-fn file_move(src, dst) {
-    if (os_name() = "windows") {
-        return system("move /y \"" + src + "\" \"" + dst + "\"")
+fn file_read(path) {
+    if (current_os() = "windows") {
+        return shell_output("python -c \"import sys; print(sys.stdin.read(), end='')\" < " + _q(path))
     }
-    return system("mv \"" + src + "\" \"" + dst + "\"")
+    return shell_output("python3 -c \"import sys; print(sys.stdin.read(), end='')\" < " + _q(path))
+}
+
+fn file_read_lines(path) {
+    return file_read(path)
 }
 
 fn file_write(path, content) {
-    if (os_name() = "windows") {
-        return system("echo " + content + " > \"" + path + "\"")
+    set py = "python3"
+    if (current_os() = "windows") {
+        set py = "python"
+        return _ok(system(py + " -c \"import sys; open(sys.argv[1], 'w', newline='').write(sys.argv[2])\" " + _q(path) + " " + _q(content)))
     }
-    return system("printf '%s' \"" + content + "\" > \"" + path + "\"")
+    return _ok(system(py + " -c \"import sys; open(sys.argv[1], 'w').write(sys.stdin.read())\" " + _q(path) + " <<'HAWK_OS_W'\n" + content + "\nHAWK_OS_W"))
 }
 
 fn file_append(path, content) {
-    if (os_name() = "windows") {
-        return system("echo " + content + " >> \"" + path + "\"")
+    set py = "python3"
+    if (current_os() = "windows") {
+        set py = "python"
+        return _ok(system(py + " -c \"import sys; open(sys.argv[1], 'a', newline='').write(sys.argv[2])\" " + _q(path) + " " + _q(content)))
     }
-    return system("printf '%s\n' \"" + content + "\" >> \"" + path + "\"")
+    return _ok(system(py + " -c \"import sys; open(sys.argv[1], 'a').write(sys.stdin.read())\" " + _q(path) + " <<'HAWK_OS_W'\n" + content + "\nHAWK_OS_W"))
 }
 
-fn file_print(path) {
-    if (os_name() = "windows") {
-        return system("type \"" + path + "\"")
+fn file_delete(path) {
+    if (current_os() = "windows") {
+        return _ok(system("del /f /q " + _q(path)))
     }
-    return system("cat \"" + path + "\"")
+    return _ok(system("rm -f " + _q(path)))
+}
+
+fn file_copy(src, dst) {
+    if (current_os() = "windows") {
+        return _ok(system("copy /y " + _q(src) + " " + _q(dst)))
+    }
+    return _ok(system("cp " + _q(src) + " " + _q(dst)))
+}
+
+fn file_move(src, dst) {
+    if (current_os() = "windows") {
+        return _ok(system("move /y " + _q(src) + " " + _q(dst)))
+    }
+    return _ok(system("mv " + _q(src) + " " + _q(dst)))
 }
 
 fn file_size(path) {
-    if (os_name() = "macos") {
-        return system("stat -f%z \"" + path + "\"")
-    }
-    if (os_name() = "linux") {
-        return system("stat -c%s \"" + path + "\"")
-    }
-    return system("for %F in (\"" + path + "\") do @echo %~zF")
+    return _py1("import os, sys; print(os.path.getsize(sys.argv[1]))", path)
 }
 
 # ==================== DIRECTORY OPERATIONS ====================
 
 fn dir_exists(path) {
-    if (os_name() = "windows") {
-        if (system("if exist \"" + path + "\\\" (exit 0) else (exit 1)") = 0) {
-            return true
-        }
-        return false
-    }
-    if (system("test -d \"" + path + "\"") = 0) {
-        return true
-    }
-    return false
+    return _py1("import os, sys; print(os.path.isdir(sys.argv[1]))", path) = "True"
 }
 
 fn dir_create(path) {
-    if (os_name() = "windows") {
-        return system("mkdir \"" + path + "\"")
+    set py = "python3"
+    if (current_os() = "windows") {
+        set py = "python"
     }
-    return system("mkdir -p \"" + path + "\"")
+    return _ok(system(py + " -c \"import os, sys; os.makedirs(sys.argv[1], exist_ok=True)\" " + _q(path)))
+}
+
+fn dir_create_recursive(path) {
+    return dir_create(path)
 }
 
 fn dir_delete(path) {
-    if (os_name() = "windows") {
-        return system("rmdir /s /q \"" + path + "\"")
+    if (current_os() = "windows") {
+        return _ok(system("rmdir /s /q " + _q(path)))
     }
-    return system("rm -rf \"" + path + "\"")
+    return _ok(system("rm -rf " + _q(path)))
 }
 
 fn dir_list(path) {
-    if (os_name() = "windows") {
-        return system("dir \"" + path + "\"")
-    }
-    return system("ls -la \"" + path + "\"")
+    return _py1("import os, sys; print('\\n'.join(sorted(os.listdir(sys.argv[1]))))", path)
 }
+
+fn dir_list_files(path) {
+    return _py1("import os, sys; p=sys.argv[1]; print('\\n'.join(sorted([f for f in os.listdir(p) if os.path.isfile(os.path.join(p, f))])))", path)
+}
+
+fn dir_list_dirs(path) {
+    return _py1("import os, sys; p=sys.argv[1]; print('\\n'.join(sorted([f for f in os.listdir(p) if os.path.isdir(os.path.join(p, f))])))", path)
+}
+
+# ==================== NAVIGATION ====================
 
 fn get_cwd() {
-    if (os_name() = "windows") {
-        return system("cd")
-    }
-    return system("pwd")
+    return _py("import os; print(os.getcwd())")
 }
 
+# chdir is a built-in core function, available globally without import.
+
 fn get_home() {
-    if (os_name() = "windows") {
-        return system("echo %USERPROFILE%")
-    }
-    return system("echo $HOME")
+    return _py("import os; print(os.path.expanduser('~'))")
 }
 
 # ==================== PROCESSES ====================
@@ -162,51 +216,51 @@ fn exec(cmd) {
 }
 
 fn exec_bg(cmd) {
-    if (os_name() = "windows") {
+    if (current_os() = "windows") {
         return system("start /b " + cmd)
     }
     return system(cmd + " &")
 }
 
 fn sleep(seconds) {
-    if (os_name() = "windows") {
+    if (current_os() = "windows") {
         return system("timeout /t " + seconds + " /nobreak > nul")
     }
     return system("sleep " + seconds)
 }
 
 fn kill_pid(pid) {
-    if (os_name() = "windows") {
+    if (current_os() = "windows") {
         return system("taskkill /f /pid " + pid)
     }
     return system("kill " + pid)
 }
 
 fn process_list() {
-    if (os_name() = "windows") {
-        return system("tasklist")
+    if (current_os() = "windows") {
+        return shell_output("tasklist")
     }
-    return system("ps aux")
+    return shell_output("ps aux")
 }
 
 # ==================== OPEN FILES & URLS ====================
 
 fn open_file(path) {
-    if (os_name() = "macos") {
-        return system("open \"" + path + "\"")
+    if (current_os() = "macos") {
+        return system("open " + _q(path))
     }
-    if (os_name() = "windows") {
-        return system("start \"\" \"" + path + "\"")
+    if (current_os() = "windows") {
+        return system("start \"\" " + _q(path))
     }
-    return system("xdg-open \"" + path + "\" &")
+    return system("xdg-open " + _q(path) + " &")
 }
 
 fn open_url(url) {
-    if (os_name() = "macos") {
-        return system("open \"" + url + "\"")
+    if (current_os() = "macos") {
+        return system("open " + _q(url))
     }
-    if (os_name() = "windows") {
-        return system("start \"\" \"" + url + "\"")
+    if (current_os() = "windows") {
+        return system("start \"\" " + _q(url))
     }
-    return system("xdg-open \"" + url + "\" &")
+    return system("xdg-open " + _q(url) + " &")
 }

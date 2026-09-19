@@ -6,6 +6,11 @@
 #include <string.h>
 #include <stdbool.h>
 #include <math.h>
+#if defined(_WIN32) || defined(_WIN64)
+#include <direct.h>
+#else
+#include <unistd.h>
+#endif
 
 /*
  * Hawk Matrix Runtime
@@ -534,6 +539,16 @@ static inline const char* hawk_os_name(void) {
     return "macos";
 #else
     return "linux";
+#endif
+}
+
+/* Change the current working directory. Returns 0.0 on success, -1.0 on error. */
+static inline double hawk_chdir(const char *path) {
+    if (!path) return -1.0;
+#if defined(_WIN32) || defined(_WIN64)
+    return _chdir(path) == 0 ? 0.0 : -1.0;
+#else
+    return chdir(path) == 0 ? 0.0 : -1.0;
 #endif
 }
 

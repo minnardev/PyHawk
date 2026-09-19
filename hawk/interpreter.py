@@ -476,6 +476,14 @@ class Interpreter:
                 else:
                     return "linux"
 
+            if expr.callee == "chdir":
+                path = str(args[0]) if args else ""
+                try:
+                    os.chdir(path)
+                    return 0.0
+                except OSError:
+                    return -1.0
+
             if expr.callee == "beep":
                 if sys.platform.startswith("win"):
                     try:

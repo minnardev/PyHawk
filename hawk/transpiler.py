@@ -103,13 +103,40 @@ class CTranspiler:
         for s in stmts:
             if isinstance(s, FnDef):
                 fn_nodes.append(s)
-                # Check return type: bool or double
-                ret_type = "double"
-                for inner_s in s.body:
-                    if isinstance(inner_s, ReturnStmt) and inner_s.value:
-                        _, val_t = self.transpile_expr(inner_s.value)
-                        if val_t == "bool":
-                            ret_type = "bool"
+                def collect_return_types(body):
+                    types = []
+                    for inner_s in body:
+                        if isinstance(inner_s, ReturnStmt):
+                            if inner_s.value is None:
+                                types.append("void")
+                            else:
+                                _, val_t = self.transpile_expr(inner_s.value)
+                                types.append(val_t)
+                        elif isinstance(inner_s, IfStmt):
+                            types.extend(collect_return_types(inner_s.then_body))
+                            types.extend(collect_return_types(inner_s.else_body))
+                        elif isinstance(inner_s, WhileStmt):
+                            types.extend(collect_return_types(inner_s.body))
+                        elif isinstance(inner_s, ForStmt):
+                            if inner_s.init:
+                                types.extend(collect_return_types([inner_s.init]))
+                            types.extend(collect_return_types(inner_s.body))
+                            if inner_s.step:
+                                types.extend(collect_return_types([inner_s.step]))
+                    return types
+
+                return_types = collect_return_types(s.body)
+                non_void_types = [t for t in return_types if t != "void"]
+                if any(t in ("const char*", "char*") for t in non_void_types):
+                    ret_type = "const char*"
+                elif "bool" in non_void_types:
+                    ret_type = "bool"
+                elif "Matrix*" in non_void_types:
+                    ret_type = "Matrix*"
+                elif "HawkVal" in non_void_types:
+                    ret_type = "HawkVal"
+                else:
+                    ret_type = "double"
                 self.fn_signatures[s.name] = (ret_type, ["double"] * len(s.params))
             else:
                 main_stmts.append(s)
@@ -481,6 +508,9 @@ class CTranspiler:
                 return (f"hawk_shell_output({arg_code})", "char*")
             if expr.callee == "os_name":
                 return ("hawk_os_name()", "char*")
+            if expr.callee == "chdir":
+                arg_code = self.transpile_expr(expr.args[0])[0] if expr.args else '""'
+                return (f"hawk_chdir({arg_code})", "double")
             if expr.callee == "beep":
                 return ("(hawk_beep(), 0.0)", "double")
             if expr.callee == "play_sound":
