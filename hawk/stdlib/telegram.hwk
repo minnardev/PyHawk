@@ -15,8 +15,34 @@ fn _py(cmd) {
     return shell_output(py + " -c \"" + cmd + "\"")
 }
 
+fn _py1(cmd, a) {
+    set py = "python3"
+    if (os_name() = "windows") {
+        set py = "python"
+    }
+    return shell_output(py + " -c \"" + cmd + "\" " + _q(a))
+}
+
+fn _py2(cmd, a, b) {
+    set py = "python3"
+    if (os_name() = "windows") {
+        set py = "python"
+    }
+    return shell_output(py + " -c \"" + cmd + "\" " + _q(a) + " " + _q(b))
+}
+
 fn _q(s) {
     return "\"" + s + "\""
+}
+
+# ==================== JSON HELPERS ====================
+
+fn json_get_file(path, key) {
+    return _py2("import json, sys; obj=json.loads(open(sys.argv[1]).read()); print(obj.get(sys.argv[2], ''))", path, key)
+}
+
+fn json_get_nested(path, field) {
+    return _py2("import json, sys; obj=json.loads(open(sys.argv[1]).read()); parts=sys.argv[2].split('.'); val=obj\nfor p in parts:\n    if isinstance(val, dict):\n        val=val.get(p, '')\n    else:\n        val=''\nprint(val if val is not None else '')", path, field)
 }
 
 # ==================== BOT API ====================
