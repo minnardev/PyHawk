@@ -1,0 +1,73 @@
+# random.hwk — Hawk Standard Library: Random Numbers
+# Uses Python's random module for cross-platform randomness.
+#
+# Usage: import random
+#
+# Examples:
+#   set n = rand_int(1, 100)
+#   set f = rand_float()
+#   print choice("a|b|c")
+
+# ==================== INTERNAL HELPERS ====================
+
+fn _py(cmd) {
+    set py = "python3"
+    if (os_name() = "windows") {
+        set py = "python"
+    }
+    return shell_output(py + " -c \"" + cmd + "\"")
+}
+
+fn _py1(cmd, a) {
+    set py = "python3"
+    if (os_name() = "windows") {
+        set py = "python"
+    }
+    return shell_output(py + " -c \"" + cmd + "\" " + _q(a))
+}
+
+fn _py2(cmd, a, b) {
+    set py = "python3"
+    if (os_name() = "windows") {
+        set py = "python"
+    }
+    return shell_output(py + " -c \"" + cmd + "\" " + _q(a) + " " + _q(b))
+}
+
+fn _q(s) {
+    return "\"" + s + "\""
+}
+
+# ==================== BASIC RANDOM ====================
+
+fn rand_float() {
+    return _py("import random; print(random.random())")
+}
+
+fn rand_float_range(lo, hi) {
+    return _py2("import random, sys; print(random.uniform(float(sys.argv[1]), float(sys.argv[2])))", lo, hi)
+}
+
+fn rand_int(lo, hi) {
+    return _py2("import random, sys; print(random.randint(int(sys.argv[1]), int(sys.argv[2])))", lo, hi)
+}
+
+fn rand_int_range(lo, hi) {
+    return rand_int(lo, hi)
+}
+
+# ==================== SEQUENCES ====================
+
+fn choice(list_str) {
+    return _py1("import random, sys; items=sys.argv[1].split('|'); print(random.choice(items))", list_str)
+}
+
+fn shuffle(list_str) {
+    return _py1("import random, sys; items=sys.argv[1].split('|'); random.shuffle(items); print('|'.join(items))", list_str)
+}
+
+# ==================== STATE ====================
+
+fn seed(s) {
+    return _py1("import random; random.seed(sys.argv[1]); print(0)", s)
+}

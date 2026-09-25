@@ -1,0 +1,38 @@
+[
+  {
+    "label": "Hawk: Run File (Interpreter)",
+    "command": "python3",
+    "args": ["/Users/mark/Documents/PythonPROGRAMM/HAWK/hawk_cli.py", "run", "$ZED_FILE"],
+    "tags": ["hawk"],
+    "hide": "never",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false
+  },
+  {
+    "label": "Hawk: Build & Run Native Binary",
+    "command": "python3",
+    "args": ["/Users/mark/Documents/PythonPROGRAMM/HAWK/hawk_cli.py", "build", "$ZED_FILE"],
+    "tags": ["hawk"],
+    "hide": "never",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false
+  },
+  {
+    "label": "Hawk: Show Generated C Code",
+    "command": "python3",
+    "args": ["/Users/mark/Documents/PythonPROGRAMM/HAWK/hawk_cli.py", "emit", "$ZED_FILE"],
+    "tags": ["hawk"],
+    "hide": "never",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false
+  },
+  {
+    "label": "Hawk: Open REPL",
+    "command": "python3",
+    "args": ["/Users/mark/Documents/PythonPROGRAMM/HAWK/hawk_cli.py", "repl"],
+    "tags": ["hawk"],
+    "hide": "never",
+    "use_new_terminal": true,
+    "allow_concurrent_runs": false
+  }
+]

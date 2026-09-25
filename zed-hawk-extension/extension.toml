@@ -1,0 +1,13 @@
+id = "hawk"
+name = "HAWK"
+version = "0.0.2"
+schema_version = 1
+authors = ["Minnardev <minnardev@example.com>"]
+description = "HAWK programming language support for Zed"
+repository = "https://github.com/minnardev/hawk"
+icon_themes = ["icon_themes/hawk.json"]
+languages = ["languages/hawk"]
+
+[grammars.hawk]
+repository = "file:///Users/mark/Documents/PythonPROGRAMM/tree-sitter-hawk"
+rev = "main"

@@ -1,0 +1,195 @@
+# math.hwk — Hawk Standard Library: Math
+# Provides common math functions beyond basic operators.
+#
+# Usage: import math
+#
+# Examples:
+#   set x = sqrt(16)
+#   set y = pow(2, 10)
+#   print round(3.7)
+
+# ==================== INTERNAL HELPERS ====================
+
+fn _py(cmd) {
+    set py = "python3"
+    if (os_name() = "windows") {
+        set py = "python"
+    }
+    return shell_output(py + " -c \"" + cmd + "\"")
+}
+
+fn _py1(cmd, a) {
+    set py = "python3"
+    if (os_name() = "windows") {
+        set py = "python"
+    }
+    return shell_output(py + " -c \"" + cmd + "\" " + _q(a))
+}
+
+fn _py2(cmd, a, b) {
+    set py = "python3"
+    if (os_name() = "windows") {
+        set py = "python"
+    }
+    return shell_output(py + " -c \"" + cmd + "\" " + _q(a) + " " + _q(b))
+}
+
+fn _q(s) {
+    return "\"" + s + "\""
+}
+
+# ==================== BASIC MATH ====================
+
+fn sqrt(x) {
+    return _py1("import math, sys; print(math.sqrt(float(sys.argv[1])))", x)
+}
+
+fn pow(base, exp) {
+    return _py2("import math, sys; print(math.pow(float(sys.argv[1]), float(sys.argv[2])))", base, exp)
+}
+
+fn abs(x) {
+    if (x < 0) {
+        return -x
+    }
+    return x
+}
+
+fn sign(x) {
+    if (x > 0) {
+        return 1
+    }
+    if (x < 0) {
+        return -1
+    }
+    return 0
+}
+
+fn floor(x) {
+    return _py1("import math; print(math.floor(float(sys.argv[1])))", x)
+}
+
+fn ceil(x) {
+    return _py1("import math; print(math.ceil(float(sys.argv[1])))", x)
+}
+
+fn round(x) {
+    return _py1("import math; print(round(float(sys.argv[1])))", x)
+}
+
+fn max(a, b) {
+    if (a > b) {
+        return a
+    }
+    return b
+}
+
+fn min(a, b) {
+    if (a < b) {
+        return a
+    }
+    return b
+}
+
+fn clamp(x, lo, hi) {
+    if (x < lo) {
+        return lo
+    }
+    if (x > hi) {
+        return hi
+    }
+    return x
+}
+
+# ==================== TRIGONOMETRY ====================
+
+fn sin(x) {
+    return _py1("import math; print(math.sin(float(sys.argv[1])))", x)
+}
+
+fn cos(x) {
+    return _py1("import math; print(math.cos(float(sys.argv[1])))", x)
+}
+
+fn tan(x) {
+    return _py1("import math; print(math.tan(float(sys.argv[1])))", x)
+}
+
+fn asin(x) {
+    return _py1("import math; print(math.asin(float(sys.argv[1])))", x)
+}
+
+fn acos(x) {
+    return _py1("import math; print(math.acos(float(sys.argv[1])))", x)
+}
+
+fn atan(x) {
+    return _py1("import math; print(math.atan(float(sys.argv[1])))", x)
+}
+
+fn atan2(y, x) {
+    return _py2("import math, sys; print(math.atan2(float(sys.argv[1]), float(sys.argv[2])))", y, x)
+}
+
+# ==================== CONSTANTS ====================
+
+fn pi() {
+    return 3.141592653589793
+}
+
+fn e() {
+    return 2.718281828459045
+}
+
+fn tau() {
+    return 6.283185307179586
+}
+
+# ==================== LOGARITHMS ====================
+
+fn log(x) {
+    return _py1("import math; print(math.log(float(sys.argv[1])))", x)
+}
+
+fn log10(x) {
+    return _py1("import math; print(math.log10(float(sys.argv[1])))", x)
+}
+
+fn log2(x) {
+    return _py1("import math; print(math.log2(float(sys.argv[1])))", x)
+}
+
+fn exp(x) {
+    return _py1("import math; print(math.exp(float(sys.argv[1])))", x)
+}
+
+# ==================== UTILITIES ====================
+
+fn factorial(n) {
+    if (n <= 1) {
+        return 1
+    }
+    set result = 1
+    set i = 2
+    while (i <= n) {
+        set result = result * i
+        set i = i + 1
+    }
+    return result
+}
+
+fn gcd(a, b) {
+    while (b != 0) {
+        set temp = b
+        set b = a % b
+        set a = temp
+    }
+    return a
+}
+
+fn lcm(a, b) {
+    if (a = 0) {
+        return 0
+    }
+    return abs(a * b) / gcd(a, b)
+}

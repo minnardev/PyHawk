@@ -1,4 +1,3 @@
-# Демонстрация импорта модулей (import) в PyHawk
 
 import "helpers.hwk"
 

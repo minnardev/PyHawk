@@ -1,0 +1,31 @@
+{
+  "$schema": "https://zed.dev/schema/icon_themes/v0.2.0.json",
+  "name": "HAWK Icon Theme",
+  "author": "Minnardev",
+  "themes": [
+    {
+      "name": "HAWK Icon Theme",
+      "appearance": "dark",
+      "file_suffixes": {
+        "hwk": "hawk"
+      },
+      "file_icons": {
+        "hawk": {
+          "path": "./icons/hawk_white.svg"
+        }
+      }
+    },
+    {
+      "name": "HAWK Icon Theme Light",
+      "appearance": "light",
+      "file_suffixes": {
+        "hwk": "hawk"
+      },
+      "file_icons": {
+        "hawk": {
+          "path": "./icons/hawk.svg"
+        }
+      }
+    }
+  ]
+}

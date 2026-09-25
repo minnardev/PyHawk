@@ -1,0 +1,72 @@
+# telegram.hwk — Telegram Bot API
+# Uses Python urllib. No external dependencies.
+#
+# Usage: import telegram
+#
+# All functions return JSON response as string.
+
+# ==================== INTERNAL HELPERS ====================
+
+fn _py(cmd) {
+    set py = "python3"
+    if (os_name() = "windows") {
+        set py = "python"
+    }
+    return shell_output(py + " -c \"" + cmd + "\"")
+}
+
+fn _py2(cmd, a, b) {
+    set py = "python3"
+    if (os_name() = "windows") {
+        set py = "python"
+    }
+    return shell_output(py + " -c \"" + cmd + "\" " + _q(a) + " " + _q(b))
+}
+
+fn _q(s) {
+    return "\"" + s + "\""
+}
+
+# ==================== BOT API ====================
+
+fn telegram_bot(token) {
+    return token
+}
+
+fn _api(bot, method, params_str) {
+    set url = "https://api.telegram.org/bot" + bot + "/" + method
+    return _py2("import urllib.request, json, ssl, sys; ctx=ssl.create_default_context(); ctx.check_hostname=False; ctx.verify_mode=ssl.CERT_NONE; data=sys.argv[2].encode('utf-8') if sys.argv[2] else None; req=urllib.request.Request(sys.argv[1], data=data, method='POST'); print(urllib.request.urlopen(req, context=ctx).read().decode('utf-8', errors='replace'))", url, params_str)
+}
+
+fn send_message(bot, chat_id, text) {
+    set params = "{\"chat_id\":\"" + chat_id + "\",\"text\":\"" + text + "\"}"
+    return _api(bot, "sendMessage", params)
+}
+
+fn get_me(bot) {
+    return _api(bot, "getMe", "")
+}
+
+fn get_updates(bot) {
+    return _api(bot, "getUpdates", "")
+}
+
+fn get_chat(bot, chat_id) {
+    set params = "{\"chat_id\":\"" + chat_id + "\"}"
+    return _api(bot, "getChat", params)
+}
+
+fn edit_message(bot, chat_id, message_id, text) {
+    set params = "{\"chat_id\":\"" + chat_id + "\",\"message_id\":" + message_id + ",\"text\":\"" + text + "\"}"
+    return _api(bot, "editMessageText", params)
+}
+
+fn delete_message(bot, chat_id, message_id) {
+    set params = "{\"chat_id\":\"" + chat_id + "\",\"message_id\":" + message_id + "}"
+    return _api(bot, "deleteMessage", params)
+}
+
+fn answer_callback(bot, callback_query_id) {
+    set params = "{\"callback_query_id\":\"" + callback_query_id + "\"}"
+    return _api(bot, "answerCallbackQuery", params)
+}

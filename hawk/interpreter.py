@@ -445,13 +445,21 @@ class Interpreter:
                 return float(os.system(cmd))
 
             if expr.callee == "shell_output":
-                # Run a shell command and return its stdout as a string
+                # Run a shell command and return its stdout as a string.
+                # On error, return stderr so callers can see what happened.
                 cmd = str(args[0]) if args else ""
                 try:
-                    result = subprocess.check_output(cmd, shell=True, text=True, stderr=subprocess.DEVNULL)
-                    return result.strip()
+                    result = subprocess.run(
+                        cmd,
+                        shell=True,
+                        text=True,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        check=True,
+                    )
+                    return result.stdout.strip()
                 except subprocess.CalledProcessError as e:
-                    return (e.output or "").strip()
+                    return (e.stderr or e.stdout or "").strip()
 
             if expr.callee == "typeof":
                 # Return the type of a value as a string

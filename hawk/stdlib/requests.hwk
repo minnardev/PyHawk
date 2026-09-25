@@ -1,0 +1,79 @@
+# requests.hwk — HTTP-запросы
+# Uses Python urllib. No external dependencies.
+#
+# Usage: import requests
+#
+# All methods return the response body as a string.
+# status_code() extracts HTTP code from the first line.
+
+# ==================== INTERNAL HELPERS ====================
+
+fn _py(cmd) {
+    set py = "python3"
+    if (os_name() = "windows") {
+        set py = "python"
+    }
+    return shell_output(py + " -c \"" + cmd + "\"")
+}
+
+fn _py1(cmd, a) {
+    set py = "python3"
+    if (os_name() = "windows") {
+        set py = "python"
+    }
+    return shell_output(py + " -c \"" + cmd + "\" " + _q(a))
+}
+
+fn _py2(cmd, a, b) {
+    set py = "python3"
+    if (os_name() = "windows") {
+        set py = "python"
+    }
+    return shell_output(py + " -c \"" + cmd + "\" " + _q(a) + " " + _q(b))
+}
+
+fn _py3(cmd, a, b, c) {
+    set py = "python3"
+    if (os_name() = "windows") {
+        set py = "python"
+    }
+    return shell_output(py + " -c \"" + cmd + "\" " + _q(a) + " " + _q(b) + " " + _q(c))
+}
+
+fn _q(s) {
+    return "\"" + s + "\""
+}
+
+# ==================== HTTP ====================
+
+fn get(url) {
+    return _py1("import urllib.request, json, ssl, sys; ctx=ssl.create_default_context(); ctx.check_hostname=False; ctx.verify_mode=ssl.CERT_NONE; print(urllib.request.urlopen(sys.argv[1], context=ctx).read().decode('utf-8', errors='replace'))", url)
+}
+
+fn post(url, json_str) {
+    return _py2("import urllib.request, json, ssl, sys; ctx=ssl.create_default_context(); ctx.check_hostname=False; ctx.verify_mode=ssl.CERT_NONE; req=urllib.request.Request(sys.argv[1], data=sys.argv[2].encode('utf-8'), headers={'Content-Type':'application/json'}); print(urllib.request.urlopen(req, context=ctx).read().decode('utf-8', errors='replace'))", url, json_str)
+}
+
+fn form_post(url, data_str) {
+    return _py2("import urllib.request, urllib.parse, ssl, sys; ctx=ssl.create_default_context(); ctx.check_hostname=False; ctx.verify_mode=ssl.CERT_NONE; data=urllib.parse.urlencode(dict(pair.split('=') for pair in sys.argv[2].split('&'))).encode('utf-8'); req=urllib.request.Request(sys.argv[1], data=data); print(urllib.request.urlopen(req, context=ctx).read().decode('utf-8', errors='replace'))", url, data_str)
+}
+
+fn put(url, data) {
+    return _py2("import urllib.request, ssl, sys; ctx=ssl.create_default_context(); ctx.check_hostname=False; ctx.verify_mode=ssl.CERT_NONE; req=urllib.request.Request(sys.argv[1], data=sys.argv[2].encode('utf-8'), method='PUT'); print(urllib.request.urlopen(req, context=ctx).read().decode('utf-8', errors='replace'))", url, data)
+}
+
+fn delete(url) {
+    return _py1("import urllib.request, ssl, sys; ctx=ssl.create_default_context(); ctx.check_hostname=False; ctx.verify_mode=ssl.CERT_NONE; req=urllib.request.Request(sys.argv[1], method='DELETE'); print(urllib.request.urlopen(req, context=ctx).read().decode('utf-8', errors='replace'))", url)
+}
+
+fn patch(url, data) {
+    return _py2("import urllib.request, ssl, sys; ctx=ssl.create_default_context(); ctx.check_hostname=False; ctx.verify_mode=ssl.CERT_NONE; req=urllib.request.Request(sys.argv[1], data=sys.argv[2].encode('utf-8'), method='PATCH'); print(urllib.request.urlopen(req, context=ctx).read().decode('utf-8', errors='replace'))", url, data)
+}
+
+fn download(url, path) {
+    return _py2("import urllib.request, ssl, sys; ctx=ssl.create_default_context(); ctx.check_hostname=False; ctx.verify_mode=ssl.CERT_NONE; urllib.request.urlretrieve(sys.argv[1], sys.argv[2]); print(sys.argv[2])", url, path)
+}
+
+fn status_code(resp_text) {
+    return _py1("import sys; line=sys.argv[1].splitlines()[0] if sys.argv[1] else ''; parts=line.split(); code=parts[1] if len(parts)>1 else '0'; print(code)", resp_text)
+}

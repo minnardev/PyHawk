@@ -1,4 +1,3 @@
-/* 🦅 Сгенерировано компилятором Hawk v0.1 */
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -11,7 +10,6 @@
 #define pi M_PI
 #define e 2.71828182845904523536
 
-/* --- Точка входа программы --- */
 int main(int argc, char **argv) {
     printf("%s ", "=== 🦅 Демонстрация матриц в Hawk ===");
     printf("\n");
