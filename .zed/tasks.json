@@ -5,6 +5,7 @@
     "args": ["/Users/mark/Documents/PythonPROGRAMM/HAWK/hawk_cli.py", "run", "$ZED_FILE"],
     "tags": ["hawk"],
     "hide": "never",
+    "shell": false,
     "use_new_terminal": false,
     "allow_concurrent_runs": false
   },
@@ -14,6 +15,7 @@
     "args": ["/Users/mark/Documents/PythonPROGRAMM/HAWK/hawk_cli.py", "build", "$ZED_FILE"],
     "tags": ["hawk"],
     "hide": "never",
+    "shell": false,
     "use_new_terminal": false,
     "allow_concurrent_runs": false
   },
@@ -23,6 +25,7 @@
     "args": ["/Users/mark/Documents/PythonPROGRAMM/HAWK/hawk_cli.py", "emit", "$ZED_FILE"],
     "tags": ["hawk"],
     "hide": "never",
+    "shell": false,
     "use_new_terminal": false,
     "allow_concurrent_runs": false
   },
@@ -32,6 +35,7 @@
     "args": ["/Users/mark/Documents/PythonPROGRAMM/HAWK/hawk_cli.py", "repl"],
     "tags": ["hawk"],
     "hide": "never",
+    "shell": false,
     "use_new_terminal": true,
     "allow_concurrent_runs": false
   }

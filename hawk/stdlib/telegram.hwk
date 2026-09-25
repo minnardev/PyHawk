@@ -35,38 +35,38 @@ fn telegram_bot(token) {
 
 fn _api(bot, method, params_str) {
     set url = "https://api.telegram.org/bot" + bot + "/" + method
-    return _py2("import urllib.request, json, ssl, sys; ctx=ssl.create_default_context(); ctx.check_hostname=False; ctx.verify_mode=ssl.CERT_NONE; data=sys.argv[2].encode('utf-8') if sys.argv[2] else None; req=urllib.request.Request(sys.argv[1], data=data, method='POST'); print(urllib.request.urlopen(req, context=ctx).read().decode('utf-8', errors='replace'))", url, params_str)
+    return _py2("import urllib.request, json, ssl, sys; ctx=ssl.create_default_context(); ctx.check_hostname=False; ctx.verify_mode=ssl.CERT_NONE; params=json.loads(sys.argv[2]) if sys.argv[2] else {}; data=json.dumps(params).encode('utf-8'); req=urllib.request.Request(sys.argv[1], data=data, method='POST', headers={'Content-Type':'application/json'}); print(urllib.request.urlopen(req, context=ctx).read().decode('utf-8', errors='replace'))", url, params_str)
 }
 
 fn send_message(bot, chat_id, text) {
-    set params = "{\"chat_id\":\"" + chat_id + "\",\"text\":\"" + text + "\"}"
+    set params = "{\"chat_id\": " + chat_id + ", \"text\": " + _q(text) + "}"
     return _api(bot, "sendMessage", params)
 }
 
 fn get_me(bot) {
-    return _api(bot, "getMe", "")
+    return _api(bot, "getMe", "{}")
 }
 
 fn get_updates(bot) {
-    return _api(bot, "getUpdates", "")
+    return _api(bot, "getUpdates", "{}")
 }
 
 fn get_chat(bot, chat_id) {
-    set params = "{\"chat_id\":\"" + chat_id + "\"}"
+    set params = "{\"chat_id\": " + chat_id + "}"
     return _api(bot, "getChat", params)
 }
 
 fn edit_message(bot, chat_id, message_id, text) {
-    set params = "{\"chat_id\":\"" + chat_id + "\",\"message_id\":" + message_id + ",\"text\":\"" + text + "\"}"
+    set params = "{\"chat_id\": " + chat_id + ", \"message_id\": " + message_id + ", \"text\": " + _q(text) + "}"
     return _api(bot, "editMessageText", params)
 }
 
 fn delete_message(bot, chat_id, message_id) {
-    set params = "{\"chat_id\":\"" + chat_id + "\",\"message_id\":" + message_id + "}"
+    set params = "{\"chat_id\": " + chat_id + ", \"message_id\": " + message_id + "}"
     return _api(bot, "deleteMessage", params)
 }
 
 fn answer_callback(bot, callback_query_id) {
-    set params = "{\"callback_query_id\":\"" + callback_query_id + "\"}"
+    set params = "{\"callback_query_id\": " + _q(callback_query_id) + "}"
     return _api(bot, "answerCallbackQuery", params)
 }
