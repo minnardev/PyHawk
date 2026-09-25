@@ -15,14 +15,6 @@ fn _py(cmd) {
     return shell_output(py + " -c \"" + cmd + "\"")
 }
 
-fn _py2(cmd, a, b) {
-    set py = "python3"
-    if (os_name() = "windows") {
-        set py = "python"
-    }
-    return shell_output(py + " -c \"" + cmd + "\" " + _q(a) + " " + _q(b))
-}
-
 fn _q(s) {
     return "\"" + s + "\""
 }
@@ -35,7 +27,8 @@ fn telegram_bot(token) {
 
 fn _api(bot, method, params_str) {
     set url = "https://api.telegram.org/bot" + bot + "/" + method
-    return _py2("import urllib.request, json, ssl, sys; ctx=ssl.create_default_context(); ctx.check_hostname=False; ctx.verify_mode=ssl.CERT_NONE; params=json.loads(sys.argv[2]) if sys.argv[2] else {}; data=json.dumps(params).encode('utf-8'); req=urllib.request.Request(sys.argv[1], data=data, method='POST', headers={'Content-Type':'application/json'}); print(urllib.request.urlopen(req, context=ctx).read().decode('utf-8', errors='replace'))", url, params_str)
+    set cmd = "python3 -c \"" + "import urllib.request, json, ssl, sys; ctx=ssl.create_default_context(); ctx.check_hostname=False; ctx.verify_mode=ssl.CERT_NONE; params=json.loads(sys.stdin.read()); data=json.dumps(params).encode('utf-8'); req=urllib.request.Request(sys.argv[1], data=data, method='POST', headers={'Content-Type':'application/json'}); print(urllib.request.urlopen(req, context=ctx).read().decode('utf-8', errors='replace'))" + "\" " + _q(url) + " <<'HAWK_JSON'\n" + params_str + "\nHAWK_JSON"
+    return shell_output(cmd)
 }
 
 fn send_message(bot, chat_id, text) {
