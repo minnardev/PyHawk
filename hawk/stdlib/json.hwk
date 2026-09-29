@@ -1,0 +1,130 @@
+# json.hwk — Hawk Standard Library: JSON
+# Uses Python's json module. No external dependencies.
+#
+# Usage: import json
+#
+# All values that come from JSON are returned as strings.
+# Use to_number() to convert numeric strings to numbers.
+#
+# JSON strings are passed via stdin heredoc to avoid shell quoting issues.
+#
+# Examples:
+#   import json
+#   set data = json.read_file("config.json")
+#   print json.get(data, "name")
+#   print json.get_nested(data, "user.profile.age")
+
+# ==================== INTERNAL HELPERS ====================
+
+fn _q(s) {
+    return "\"" + s + "\""
+}
+
+fn _py(cmd) {
+    set py = "python3"
+    if (os_name() = "windows") {
+        set py = "python"
+    }
+    return shell_output(py + " -c \"" + cmd + "\"")
+}
+
+fn _py1(cmd, a) {
+    set py = "python3"
+    if (os_name() = "windows") {
+        set py = "python"
+    }
+    return shell_output(py + " -c \"" + cmd + "\" " + _q(a))
+}
+
+fn _py2(cmd, a, b) {
+    set py = "python3"
+    if (os_name() = "windows") {
+        set py = "python"
+    }
+    return shell_output(py + " -c \"" + cmd + "\" " + _q(a) + " " + _q(b))
+}
+
+fn _py3(cmd, a, b, c) {
+    set py = "python3"
+    if (os_name() = "windows") {
+        set py = "python"
+    }
+    return shell_output(py + " -c \"" + cmd + "\" " + _q(a) + " " + _q(b) + " " + _q(c))
+}
+
+# ==================== FILE I/O ====================
+
+fn read_file(path) {
+    set py = "python3"
+    if (os_name() = "windows") {
+        set py = "python"
+    }
+    return shell_output(py + " -c \"import json; print(json.dumps(json.load(open(sys.argv[1])), ensure_ascii=False))\" " + _q(path))
+}
+
+fn write_file(path, json_str) {
+    set py = "python3"
+    if (os_name() = "windows") {
+        set py = "python"
+        return system("echo " + _q(json_str) + " | " + py + " -c \"import json, sys; json.dump(json.load(sys.stdin), open(sys.argv[1], 'w'), ensure_ascii=False, indent=2)\" " + _q(path))
+    }
+    return system("cat <<'HAWK_JSON' > /tmp/hawk_json_write_tmp.json\n" + json_str + "\nHAWK_JSON\npython3 -c \"import json; json.dump(json.load(open('/tmp/hawk_json_write_tmp.json')), open(sys.argv[1], 'w'), ensure_ascii=False, indent=2)\" " + _q(path) + "\nrm -f /tmp/hawk_json_write_tmp.json")
+}
+
+# ==================== PARSING & QUERYING ====================
+
+fn parse(json_str) {
+    return shell_output("python3 -c \"import json, sys; print(json.dumps(json.loads(sys.stdin.read()), ensure_ascii=False))\" <<'HAWK_JSON'\n" + json_str + "\nHAWK_JSON")
+}
+
+fn get(json_str, key) {
+    return shell_output("python3 -c \"import json, sys; obj=json.loads(sys.stdin.read()); print(obj.get(sys.argv[1], ''))\" " + _q(key) + " <<'HAWK_JSON'\n" + json_str + "\nHAWK_JSON")
+}
+
+fn get_nested(json_str, path) {
+    return shell_output("python3 -c \"import json, sys; obj=json.loads(sys.stdin.read()); parts=sys.argv[1].split('.'); val=obj\nfor p in parts:\n    if isinstance(val, dict):\n        val=val.get(p, '')\n    else:\n        val=''\nprint(val if val is not None else '')\" " + _q(path) + " <<'HAWK_JSON'\n" + json_str + "\nHAWK_JSON")
+}
+
+fn keys(json_str) {
+    return shell_output("python3 -c \"import json, sys; obj=json.loads(sys.stdin.read()); print('|'.join(sorted(obj.keys())) if isinstance(obj, dict) else '')\" <<'HAWK_JSON'\n" + json_str + "\nHAWK_JSON")
+}
+
+fn has_key(json_str, key) {
+    return shell_output("python3 -c \"import json, sys; obj=json.loads(sys.stdin.read()); print('true' if isinstance(obj, dict) and sys.argv[1] in obj else 'false')\" " + _q(key) + " <<'HAWK_JSON'\n" + json_str + "\nHAWK_JSON")
+}
+
+fn type_of_value(json_str) {
+    return shell_output("python3 -c \"import json, sys; obj=json.loads(sys.stdin.read()); t=type(obj).__name__; print('object' if t=='dict' else 'array' if t=='list' else t)\" <<'HAWK_JSON'\n" + json_str + "\nHAWK_JSON")
+}
+
+# ==================== BUILDING JSON ====================
+
+fn stringify(value) {
+    return _py1("import json, sys; print(json.dumps(sys.argv[1], ensure_ascii=False))", value)
+}
+
+fn create_object(entries_str) {
+    return _py1("import json, sys; pairs=sys.argv[1].split('|'); obj={}\nfor p in pairs:\n    if ':' in p:\n        k,v=p.split(':', 1)\n        try: obj[k]=int(v)\n        except: obj[k]=v\nprint(json.dumps(obj, ensure_ascii=False))", entries_str)
+}
+
+fn create_array(items_str) {
+    return _py1("import json, sys; items=sys.argv[1].split('|'); out=[]\nfor i in items:\n    try: out.append(int(i))\n    except:\n        try: out.append(float(i))\n        except: out.append(i)\nprint(json.dumps(out, ensure_ascii=False))", items_str)
+}
+
+fn set_key(json_str, key, value) {
+    return shell_output("python3 -c \"import json, sys; obj=json.loads(sys.stdin.read()); obj[sys.argv[1]]=sys.argv[2]; print(json.dumps(obj, ensure_ascii=False))\" " + _q(key) + " " + _q(value) + " <<'HAWK_JSON'\n" + json_str + "\nHAWK_JSON")
+}
+
+fn delete_key(json_str, key) {
+    return shell_output("python3 -c \"import json, sys; obj=json.loads(sys.stdin.read()); obj.pop(sys.argv[1], None); print(json.dumps(obj, ensure_ascii=False))\" " + _q(key) + " <<'HAWK_JSON'\n" + json_str + "\nHAWK_JSON")
+}
+
+# ==================== FORMATTING ====================
+
+fn pretty(json_str) {
+    return shell_output("python3 -c \"import json, sys; obj=json.loads(sys.stdin.read()); print(json.dumps(obj, ensure_ascii=False, indent=2))\" <<'HAWK_JSON'\n" + json_str + "\nHAWK_JSON")
+}
+
+fn minify(json_str) {
+    return shell_output("python3 -c \"import json, sys; obj=json.loads(sys.stdin.read()); print(json.dumps(obj, ensure_ascii=False, separators=(',',':')))\" <<'HAWK_JSON'\n" + json_str + "\nHAWK_JSON")
+}

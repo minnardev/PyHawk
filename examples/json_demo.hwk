@@ -1,0 +1,58 @@
+# 🦅 JSON Library Demo
+# Demonstrates reading, querying, and building JSON with the json.hwk stdlib.
+
+import json
+
+# Build a JSON object from key:value pairs separated by |
+set obj = create_object("name:Hawk|version:1.0|active:true")
+print "Original object:"
+print pretty(obj)
+
+# Nested object built step by step
+set user = create_object("name:Mark|age:12")
+set settings = create_object("theme:dark")
+set nested = set_key(set_key(create_object(""), "user", user), "settings", settings)
+print "\nNested object:"
+print pretty(nested)
+
+# Querying
+print "\n--- Querying ---"
+print "name:", get(obj, "name")
+print "version:", get(obj, "version")
+print "user.name:", get_nested(nested, "user.name")
+print "user.age:", get_nested(nested, "user.age")
+print "user.theme:", get_nested(nested, "settings.theme")
+print "missing:", get(obj, "missing")
+
+# Key checks
+print "has 'name':", has_key(obj, "name")
+print "has 'foo':", has_key(obj, "foo")
+print "keys:", keys(obj)
+
+# Modify
+set updated = set_key(obj, "version", "2.0")
+print "\nAfter update:"
+print pretty(updated)
+
+set removed = delete_key(updated, "active")
+print "\nAfter delete:"
+print pretty(removed)
+
+# Array
+set arr = create_array("10|20|30|hello")
+print "\nArray:"
+print pretty(arr)
+
+# Minify
+print "\nMinified:"
+print minify(obj)
+
+# Stringify a simple value
+print "\nStringified number:"
+print stringify("42")
+
+# Parse validates JSON
+print "\nParsed valid JSON:"
+set raw = create_object("a:1")
+set raw = set_key(raw, "b", "2")
+print parse(pretty(raw))

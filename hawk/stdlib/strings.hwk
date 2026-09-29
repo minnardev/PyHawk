@@ -1,0 +1,158 @@
+# strings.hwk — Hawk Standard Library: String Utilities
+# Cross-platform string operations via Python backend.
+#
+# Usage: import strings
+#
+# All functions take and return strings (except length() which returns a number).
+# Examples:
+#   print strings.to_upper("hello")
+#   print strings.split("a,b,c", ",")
+#   print strings.trim("  text  ")
+
+# ==================== INTERNAL HELPERS ====================
+
+fn _q(s) {
+    return "\"" + s + "\""
+}
+
+fn _py(cmd) {
+    set py = "python3"
+    if (os_name() = "windows") {
+        set py = "python"
+    }
+    return shell_output(py + " -c \"" + cmd + "\"")
+}
+
+fn _py1(cmd, a) {
+    set py = "python3"
+    if (os_name() = "windows") {
+        set py = "python"
+    }
+    return shell_output(py + " -c \"" + cmd + "\" " + _q(a))
+}
+
+fn _py2(cmd, a, b) {
+    set py = "python3"
+    if (os_name() = "windows") {
+        set py = "python"
+    }
+    return shell_output(py + " -c \"" + cmd + "\" " + _q(a) + " " + _q(b))
+}
+
+fn _py3(cmd, a, b, c) {
+    set py = "python3"
+    if (os_name() = "windows") {
+        set py = "python"
+    }
+    return shell_output(py + " -c \"" + cmd + "\" " + _q(a) + " " + _q(b) + " " + _q(c))
+}
+
+# ==================== CASE & TRIM ====================
+
+fn to_upper(s) {
+    return _py1("import sys; print(sys.argv[1].upper())", s)
+}
+
+fn to_lower(s) {
+    return _py1("import sys; print(sys.argv[1].lower())", s)
+}
+
+fn capitalize(s) {
+    return _py1("import sys; print(sys.argv[1].capitalize())", s)
+}
+
+fn trim(s) {
+    return _py1("import sys; print(sys.argv[1].strip())", s)
+}
+
+fn trim_left(s) {
+    return _py1("import sys; print(sys.argv[1].lstrip())", s)
+}
+
+fn trim_right(s) {
+    return _py1("import sys; print(sys.argv[1].rstrip())", s)
+}
+
+# ==================== SEARCH ====================
+
+fn contains(text, sub) {
+    return _py2("import sys; print('true' if sys.argv[2] in sys.argv[1] else 'false')", text, sub)
+}
+
+fn starts_with(text, prefix) {
+    return _py2("import sys; print('true' if sys.argv[1].startswith(sys.argv[2]) else 'false')", text, prefix)
+}
+
+fn ends_with(text, suffix) {
+    return _py2("import sys; print('true' if sys.argv[1].endswith(sys.argv[2]) else 'false')", text, suffix)
+}
+
+fn index_of(text, sub) {
+    return _py2("import sys; s=sys.argv[1]; sub=sys.argv[2]; print(str(s.find(sub)))", text, sub)
+}
+
+fn last_index_of(text, sub) {
+    return _py2("import sys; s=sys.argv[1]; sub=sys.argv[2]; print(str(s.rfind(sub)))", text, sub)
+}
+
+# ==================== MANIPULATION ====================
+
+fn replace(text, old, new) {
+    return _py3("import sys; print(sys.argv[1].replace(sys.argv[2], sys.argv[3]))", text, old, new)
+}
+
+fn substring(text, start, end) {
+    return _py3("import sys; s=sys.argv[1]; print(s[int(float(sys.argv[2])):int(float(sys.argv[3]))])", text, start, end)
+}
+
+fn repeat(text, count) {
+    return _py2("import sys; print(sys.argv[1] * int(float(sys.argv[2])))", text, count)
+}
+
+fn reverse(s) {
+    return _py1("import sys; print(sys.argv[1][::-1])", s)
+}
+
+fn pad_left(text, width, pad_char) {
+    return _py3("import sys; print(sys.argv[1].rjust(int(float(sys.argv[2])), sys.argv[3]))", text, width, pad_char)
+}
+
+fn pad_right(text, width, pad_char) {
+    return _py3("import sys; print(sys.argv[1].ljust(int(float(sys.argv[2])), sys.argv[3]))", text, width, pad_char)
+}
+
+# ==================== SPLIT & JOIN ====================
+
+fn split(text, sep) {
+    return _py2("import sys; parts=sys.argv[1].split(sys.argv[2]); print('|'.join(parts))", text, sep)
+}
+
+fn join(parts, sep) {
+    return _py2("import sys; parts=sys.argv[1].split('|'); print(sys.argv[2].join(parts))", parts, sep)
+}
+
+fn lines(text) {
+    return _py1("import sys; print('|'.join(sys.argv[1].splitlines()))", text)
+}
+
+# ==================== UTILITIES ====================
+
+fn length(s) {
+    return to_number(_py1("import sys; print(len(sys.argv[1]))", s))
+}
+
+fn is_empty(s) {
+    return _py1("import sys; print('true' if not sys.argv[1] else 'false')", s)
+}
+
+fn is_numeric(s) {
+    return _py1("import sys; s=sys.argv[1]; print('true' if s.replace('.','',1).replace('-','',1).isdigit() else 'false')", s)
+}
+
+fn slice(text, start) {
+    return _py2("import sys; s=sys.argv[1]; print(s[int(float(sys.argv[2])):])", text, start)
+}
+
+fn slice_end(text, end) {
+    return _py2("import sys; s=sys.argv[1]; print(s[:int(float(sys.argv[2]))])", text, end)
+}
