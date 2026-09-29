@@ -1,5 +1,6 @@
 # json.hwk — Hawk Standard Library: JSON
 # Built-ins cover all common JSON operations.
+# File I/O uses built-in file functions.
 # No external dependencies.
 #
 # Usage: import json
@@ -16,20 +17,11 @@
 # ==================== FILE I/O ====================
 
 fn read_file(path) {
-    set py = "python3"
-    if (os_name() = "windows") {
-        set py = "python"
-    }
-    return shell_output(py + " -c \"import json; print(json.dumps(json.load(open(sys.argv[1])), ensure_ascii=False))\" " + _q(path))
+    return file_read(path)
 }
 
 fn write_file(path, json_str) {
-    set py = "python3"
-    if (os_name() = "windows") {
-        set py = "python"
-        return system("echo " + _q(json_str) + " | " + py + " -c \"import json, sys; json.dump(json.load(sys.stdin), open(sys.argv[1], 'w'), ensure_ascii=False, indent=2)\" " + _q(path))
-    }
-    return system("cat <<'HAWK_JSON' > /tmp/hawk_json_write_tmp.json\n" + json_str + "\nHAWK_JSON\npython3 -c \"import json; json.dump(json.load(open('/tmp/hawk_json_write_tmp.json')), open(sys.argv[1], 'w'), ensure_ascii=False, indent=2)\" " + _q(path) + "\nrm -f /tmp/hawk_json_write_tmp.json")
+    return file_write(path, json_str)
 }
 
 # ==================== PARSING & QUERYING ====================

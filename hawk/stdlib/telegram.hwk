@@ -1,49 +1,9 @@
 # telegram.hwk — Telegram Bot API
-# Uses Python urllib. No external dependencies.
+# Uses built-in HTTP and JSON functions. No external dependencies.
 #
 # Usage: import telegram
 #
 # All functions return JSON response as string.
-
-# ==================== INTERNAL HELPERS ====================
-
-fn _py(cmd) {
-    set py = "python3"
-    if (os_name() = "windows") {
-        set py = "python"
-    }
-    return shell_output(py + " -c \"" + cmd + "\"")
-}
-
-fn _py1(cmd, a) {
-    set py = "python3"
-    if (os_name() = "windows") {
-        set py = "python"
-    }
-    return shell_output(py + " -c \"" + cmd + "\" " + _q(a))
-}
-
-fn _py2(cmd, a, b) {
-    set py = "python3"
-    if (os_name() = "windows") {
-        set py = "python"
-    }
-    return shell_output(py + " -c \"" + cmd + "\" " + _q(a) + " " + _q(b))
-}
-
-fn _q(s) {
-    return "\"" + s + "\""
-}
-
-# ==================== JSON HELPERS ====================
-
-fn json_get_file(path, key) {
-    return _py2("import json, sys; obj=json.loads(open(sys.argv[1]).read()); print(obj.get(sys.argv[2], ''))", path, key)
-}
-
-fn json_get_nested(path, field) {
-    return _py2("import json, sys; obj=json.loads(open(sys.argv[1]).read()); parts=sys.argv[2].split('.'); val=obj\nfor p in parts:\n    if isinstance(val, dict):\n        val=val.get(p, '')\n    else:\n        val=''\nprint(val if val is not None else '')", path, field)
-}
 
 # ==================== BOT API ====================
 
@@ -53,12 +13,11 @@ fn telegram_bot(token) {
 
 fn _api(bot, method, params_str) {
     set url = "https://api.telegram.org/bot" + bot + "/" + method
-    set cmd = "python3 -c \"" + "import urllib.request, json, ssl, sys; ctx=ssl.create_default_context(); ctx.check_hostname=False; ctx.verify_mode=ssl.CERT_NONE; params=json.loads(sys.stdin.read()); data=json.dumps(params).encode('utf-8'); req=urllib.request.Request(sys.argv[1], data=data, method='POST', headers={'Content-Type':'application/json'}); print(urllib.request.urlopen(req, context=ctx).read().decode('utf-8', errors='replace'))" + "\" " + _q(url) + " <<'HAWK_JSON'\n" + params_str + "\nHAWK_JSON"
-    return shell_output(cmd)
+    return http_post(url, params_str)
 }
 
 fn send_message(bot, chat_id, text) {
-    set params = "{\"chat_id\": " + chat_id + ", \"text\": " + _q(text) + "}"
+    set params = "{\"chat_id\": " + chat_id + ", \"text\": " + text + "}"
     return _api(bot, "sendMessage", params)
 }
 
@@ -76,7 +35,7 @@ fn get_chat(bot, chat_id) {
 }
 
 fn edit_message(bot, chat_id, message_id, text) {
-    set params = "{\"chat_id\": " + chat_id + ", \"message_id\": " + message_id + ", \"text\": " + _q(text) + "}"
+    set params = "{\"chat_id\": " + chat_id + ", \"message_id\": " + message_id + ", \"text\": " + text + "}"
     return _api(bot, "editMessageText", params)
 }
 
@@ -86,6 +45,6 @@ fn delete_message(bot, chat_id, message_id) {
 }
 
 fn answer_callback(bot, callback_query_id) {
-    set params = "{\"callback_query_id\": " + _q(callback_query_id) + "}"
+    set params = "{\"callback_query_id\": " + callback_query_id + "}"
     return _api(bot, "answerCallbackQuery", params)
 }

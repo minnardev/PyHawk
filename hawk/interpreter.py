@@ -702,6 +702,116 @@ class Interpreter:
             if expr.callee == "json_stringify":
                 return json.dumps(args[0], ensure_ascii=False)
 
+            if expr.callee == "file_read":
+                path = str(args[0]) if args else ""
+                try:
+                    with open(path, "r", encoding="utf-8") as f:
+                        return f.read()
+                except Exception:
+                    return ""
+            if expr.callee == "file_write":
+                path = str(args[0]) if args else ""
+                content = str(args[1]) if len(args) > 1 else ""
+                try:
+                    with open(path, "w", encoding="utf-8") as f:
+                        f.write(content)
+                    return "true"
+                except Exception:
+                    return "false"
+            if expr.callee == "file_append":
+                path = str(args[0]) if args else ""
+                content = str(args[1]) if len(args) > 1 else ""
+                try:
+                    with open(path, "a", encoding="utf-8") as f:
+                        f.write(content)
+                    return "true"
+                except Exception:
+                    return "false"
+            if expr.callee == "file_exists":
+                path = str(args[0]) if args else ""
+                return "true" if os.path.exists(path) else "false"
+            if expr.callee == "file_is_file":
+                path = str(args[0]) if args else ""
+                return "true" if os.path.isfile(path) else "false"
+            if expr.callee == "file_is_dir":
+                path = str(args[0]) if args else ""
+                return "true" if os.path.isdir(path) else "false"
+            if expr.callee == "file_delete":
+                path = str(args[0]) if args else ""
+                try:
+                    os.remove(path)
+                    return "true"
+                except Exception:
+                    return "false"
+            if expr.callee == "file_size":
+                path = str(args[0]) if args else ""
+                try:
+                    return float(os.path.getsize(path))
+                except Exception:
+                    return -1.0
+            if expr.callee == "dir_create":
+                path = str(args[0]) if args else ""
+                try:
+                    os.makedirs(path, exist_ok=True)
+                    return "true"
+                except Exception:
+                    return "false"
+            if expr.callee == "dir_delete":
+                path = str(args[0]) if args else ""
+                try:
+                    import shutil
+                    shutil.rmtree(path)
+                    return "true"
+                except Exception:
+                    return "false"
+            if expr.callee == "dir_list":
+                path = str(args[0]) if args else ""
+                try:
+                    items = os.listdir(path)
+                    return "|".join(sorted(items))
+                except Exception:
+                    return ""
+            if expr.callee == "get_cwd":
+                return os.getcwd()
+            if expr.callee == "get_home":
+                return os.path.expanduser("~")
+
+            if expr.callee == "http_get":
+                url = str(args[0]) if args else ""
+                try:
+                    import urllib.request
+                    import ssl
+                    ctx = ssl.create_default_context()
+                    ctx.check_hostname = False
+                    ctx.verify_mode = ssl.CERT_NONE
+                    with urllib.request.urlopen(url, context=ctx, timeout=30) as resp:
+                        return resp.read().decode("utf-8", errors="replace")
+                except Exception as e:
+                    return str(e)
+            if expr.callee == "http_post":
+                url = str(args[0]) if args else ""
+                data = str(args[1]) if len(args) > 1 else ""
+                try:
+                    import urllib.request
+                    import ssl
+                    ctx = ssl.create_default_context()
+                    ctx.check_hostname = False
+                    ctx.verify_mode = ssl.CERT_NONE
+                    req = urllib.request.Request(url, data=data.encode("utf-8"), method="POST")
+                    with urllib.request.urlopen(req, context=ctx, timeout=30) as resp:
+                        return resp.read().decode("utf-8", errors="replace")
+                except Exception as e:
+                    return str(e)
+            if expr.callee == "http_download":
+                url = str(args[0]) if args else ""
+                dest = str(args[1]) if len(args) > 1 else ""
+                try:
+                    import urllib.request
+                    urllib.request.urlretrieve(url, dest)
+                    return "true"
+                except Exception as e:
+                    return str(e)
+
             # User-defined functions
             if expr.callee in self.functions:
                 fn_def = self.functions[expr.callee]
