@@ -16,7 +16,7 @@
     |       ||       ||       ||     |_ 
     |   _   ||   _   ||   _   ||    _  |
     |__| |__||__| |__||__| |__||___| |_|
-   🦅 PyHawk — Sharp as a hawk, fast as math
+   🦅 PyHawk — Clean syntax, powerful modules
 ```
 
 > **PyHawk** — полнофункциональный прототип языка Hawk на Python с интерпретатором.
@@ -161,4 +161,4 @@ OK
 ## 🔓 Лицензия
 
 Распространяется под лицензией **MIT**.
-«Sharp as a hawk, fast as math». 🦅
+«Clean syntax, powerful modules». 🦅

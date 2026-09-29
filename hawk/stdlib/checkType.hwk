@@ -1,5 +1,5 @@
 # checkType.hwk — Hawk Standard Library: Type Checking
-# Requires typeof() built-in (PyHawk v0.3.1+)
+# Requires typeof() built-in (PyHawk v0.3.2+)
 #
 # Usage: import checkType
 #

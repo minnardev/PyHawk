@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # PyHawk — Automated Cross-Platform Installer for macOS & Linux
-# «Sharp as a hawk, fast as math»
+# «Clean syntax, powerful modules»
 # ==============================================================================
 
 set -e
@@ -151,4 +151,4 @@ echo -e "Try it right now:"
 echo -e "  ${CYAN}pyhawk version${NC}             # Check version"
 echo -e "  ${CYAN}pyhawk repl${NC}                # Interactive mathematical REPL"
 echo -e "  ${CYAN}pyhawk run <file.hwk>${NC}      # Run PyHawk script (Interpreter)"
-echo -e "\n${BOLD}Sharp as a hawk, fast as math.${NC}\n"
+echo -e "\n${BOLD}Clean syntax, powerful modules.${NC}\n"

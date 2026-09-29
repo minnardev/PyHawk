@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 PyHawk Programming Language — CLI
-«Sharp as a hawk, fast as math»
+«Clean syntax, powerful modules»
 """
 
 import sys
@@ -24,7 +24,7 @@ HAWK_LOGO = r"""
     |       ||       ||       ||     |_ 
     |   _   ||   _   ||   _   ||    _  |
     |__| |__||__| |__||__| |__||___| |_|
-   PyHawk — Sharp as a hawk, fast as math (v0.1)
+   PyHawk — Clean syntax, powerful modules (v0.1)
 """
 
 
@@ -121,7 +121,7 @@ def cmd_format(args):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="PyHawk Programming Language — CLI (\"Sharp as a hawk, fast as math\")"
+        description="PyHawk Programming Language — CLI (\"Clean syntax, powerful modules\")"
     )
     subparsers = parser.add_subparsers(dest="subcommand", help="Command to execute")
 
@@ -157,7 +157,7 @@ def main():
     elif args.subcommand == "format":
         cmd_format(args)
     elif args.subcommand == "version":
-        print("PyHawk v0.3.1")
+        print("PyHawk v0.3.2")
     else:
         parser.print_help()
 
