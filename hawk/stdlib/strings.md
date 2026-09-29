@@ -1,8 +1,6 @@
 # `strings.hwk` — строковые утилиты
 
-Кросс-платформенные операции со строками через Python backend.
-Все функции принимают и возвращают строки, кроме `length()`,
-которая возвращает число.
+Все функции являются built-ins и не требуют подключения модуля.
 
 ```
 hawk
@@ -11,30 +9,18 @@ import strings
 
 set text = "  Hello, Hawk!  "
 
-# Регистр и пробелы
 print to_upper(text)       # HELLO, HAWK!
 print to_lower(text)       #   hello, hawk!  
 print trim(text)           # Hello, Hawk!
 
-# Поиск
 if (contains(text, "Hawk") = "true") {
     print "Found Hawk"
 }
-print starts_with(text, "  H")
-print ends_with(text, "!  ")
-print index_of(text, "Hawk")   # 9
 
-# Замена и подстрока
-print replace(text, "Hawk", "World")
-print substring(text, 3, 8)
-print reverse("Hawk")      # kwaH
-
-# Разделение и объединение
 set parts = split("a,b,c", ",")
-print parts                        # a|b|c
+print parts                # a|b|c
 print join("a|b|c", "-")   # a-b-c
 
-# Длина
 print length(text)         # 16
 ```
 

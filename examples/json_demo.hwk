@@ -8,10 +8,13 @@ set obj = create_object("name:Hawk|version:1.0|active:true")
 print "Original object:"
 print pretty(obj)
 
-# Nested object built step by step
-set user = create_object("name:Mark|age:12")
-set settings = create_object("theme:dark")
-set nested = set_key(set_key(create_object(""), "user", user), "settings", settings)
+# Nested object built by concatenating JSON strings
+set nested = "{"
+set nested = nested + "\"user\":"
+set nested = nested + create_object("name:Mark|age:12")
+set nested = nested + ",\"settings\":"
+set nested = nested + create_object("theme:dark")
+set nested = nested + "}"
 print "\nNested object:"
 print pretty(nested)
 

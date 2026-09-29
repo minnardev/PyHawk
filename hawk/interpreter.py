@@ -6,6 +6,10 @@ import os
 import sys
 import math
 import subprocess
+import random
+import time
+import datetime
+import json
 from typing import Any, Dict, List, Optional, Set
 from hawk.ast_nodes import (
     Stmt, Expr, SetStmt, IndexAssignStmt, PrintStmt, IfStmt, WhileStmt, ForStmt,
@@ -532,6 +536,171 @@ class Interpreter:
                     return float(val)
                 except (ValueError, TypeError):
                     return 0.0
+
+            if expr.callee == "pow":
+                return args[0] ** args[1]
+            if expr.callee == "floor":
+                return math.floor(args[0])
+            if expr.callee == "ceil":
+                return math.ceil(args[0])
+            if expr.callee == "round":
+                return round(args[0])
+            if expr.callee == "log":
+                return math.log(args[0])
+            if expr.callee == "log10":
+                return math.log10(args[0])
+            if expr.callee == "log2":
+                return math.log2(args[0])
+            if expr.callee == "exp":
+                return math.exp(args[0])
+
+            if expr.callee == "rand_float":
+                return random.random()
+            if expr.callee == "rand_int":
+                return random.randint(int(args[0]), int(args[1]))
+            if expr.callee == "seed":
+                random.seed(str(args[0]))
+                return 0.0
+
+            if expr.callee == "timestamp":
+                return time.time()
+            if expr.callee == "now":
+                return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            if expr.callee == "today":
+                return datetime.date.today().isoformat()
+            if expr.callee == "clock":
+                return datetime.datetime.now().strftime("%H:%M:%S")
+            if expr.callee == "day_of_week":
+                return datetime.datetime.now().strftime("%A")
+            if expr.callee == "month":
+                return datetime.datetime.now().strftime("%B")
+            if expr.callee == "year":
+                return datetime.datetime.now().strftime("%Y")
+            if expr.callee == "hour":
+                return datetime.datetime.now().strftime("%H")
+            if expr.callee == "minute":
+                return datetime.datetime.now().strftime("%M")
+
+            if expr.callee == "to_upper":
+                return str(args[0]).upper()
+            if expr.callee == "to_lower":
+                return str(args[0]).lower()
+            if expr.callee == "capitalize":
+                return str(args[0]).capitalize()
+            if expr.callee == "trim":
+                return str(args[0]).strip()
+            if expr.callee == "trim_left":
+                return str(args[0]).lstrip()
+            if expr.callee == "trim_right":
+                return str(args[0]).rstrip()
+            if expr.callee == "contains":
+                return "true" if args[1] in str(args[0]) else "false"
+            if expr.callee == "starts_with":
+                return "true" if str(args[0]).startswith(str(args[1])) else "false"
+            if expr.callee == "ends_with":
+                return "true" if str(args[0]).endswith(str(args[1])) else "false"
+            if expr.callee == "index_of":
+                return str(str(args[0]).find(str(args[1])))
+            if expr.callee == "last_index_of":
+                return str(str(args[0]).rfind(str(args[1])))
+            if expr.callee == "replace":
+                return str(args[0]).replace(str(args[1]), str(args[2]))
+            if expr.callee == "substring":
+                return str(args[0])[int(float(args[1])):int(float(args[2]))]
+            if expr.callee == "slice":
+                return str(args[0])[int(float(args[1])):]
+            if expr.callee == "slice_end":
+                return str(args[0])[:int(float(args[1]))]
+            if expr.callee == "repeat":
+                return str(args[0]) * int(float(args[1]))
+            if expr.callee == "reverse":
+                return str(args[0])[::-1]
+            if expr.callee == "pad_left":
+                return str(args[0]).rjust(int(float(args[1])), str(args[2]))
+            if expr.callee == "pad_right":
+                return str(args[0]).ljust(int(float(args[1])), str(args[2]))
+            if expr.callee == "split":
+                return "|".join(str(args[0]).split(str(args[1])))
+            if expr.callee == "join":
+                return str(args[1]).join(str(args[0]).split("|"))
+            if expr.callee == "lines":
+                return "|".join(str(args[0]).splitlines())
+            if expr.callee == "length":
+                return float(len(str(args[0])))
+            if expr.callee == "is_empty":
+                return "true" if not str(args[0]) else "false"
+            if expr.callee == "is_numeric":
+                s = str(args[0]).replace(".", "", 1).replace("-", "", 1)
+                return "true" if s.isdigit() else "false"
+
+            if expr.callee == "to_string":
+                return str(args[0])
+            if expr.callee == "split_count":
+                s = str(args[0])
+                sep = str(args[1]) if len(args) > 1 else "|"
+                if not s:
+                    return 0.0
+                return float(s.count(sep) + 1)
+            if expr.callee == "split_get":
+                s = str(args[0])
+                sep = str(args[1]) if len(args) > 1 else "|"
+                idx = int(args[2])
+                parts = s.split(sep)
+                if 0 <= idx < len(parts):
+                    return parts[idx]
+                return ""
+
+            if expr.callee == "json_get":
+                obj = json.loads(args[0])
+                key = str(args[1])
+                if isinstance(obj, dict):
+                    val = obj.get(key, "")
+                    if isinstance(val, str):
+                        return val
+                    return json.dumps(val, ensure_ascii=False)
+                return ""
+            if expr.callee == "json_get_nested":
+                obj = json.loads(args[0])
+                parts = str(args[1]).split(".")
+                for p in parts:
+                    if isinstance(obj, dict):
+                        obj = obj.get(p, "")
+                    else:
+                        obj = ""
+                        break
+                if obj is None:
+                    return ""
+                if isinstance(obj, str):
+                    return obj
+                return json.dumps(obj, ensure_ascii=False)
+            if expr.callee == "json_keys":
+                obj = json.loads(args[0])
+                if isinstance(obj, dict):
+                    return "|".join(sorted(obj.keys()))
+                return ""
+            if expr.callee == "json_has_key":
+                obj = json.loads(args[0])
+                return "true" if isinstance(obj, dict) and str(args[1]) in obj else "false"
+            if expr.callee == "json_set_key":
+                obj = json.loads(args[0])
+                obj[str(args[1])] = args[2]
+                return json.dumps(obj, ensure_ascii=False)
+            if expr.callee == "json_delete_key":
+                obj = json.loads(args[0])
+                obj.pop(str(args[1]), None)
+                return json.dumps(obj, ensure_ascii=False)
+            if expr.callee == "json_pretty":
+                obj = json.loads(args[0])
+                return json.dumps(obj, ensure_ascii=False, indent=2)
+            if expr.callee == "json_minify":
+                obj = json.loads(args[0])
+                return json.dumps(obj, ensure_ascii=False, separators=(",", ":"))
+            if expr.callee == "json_type_of_value":
+                obj = json.loads(args[0])
+                t = type(obj).__name__
+                return "object" if t == "dict" else "array" if t == "list" else t
+            if expr.callee == "json_stringify":
+                return json.dumps(args[0], ensure_ascii=False)
 
             # User-defined functions
             if expr.callee in self.functions:

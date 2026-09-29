@@ -1,33 +1,31 @@
 # `json.hwk` — работа с JSON
 
 Полноценная библиотека для чтения, записи и преобразования JSON.
-Все парсинг и сериализация выполняются через Python backend,
-поэтому работает одинаково на macOS, Linux и Windows.
+Большинство операций являются built-ins. Запись в файл использует
+Python backend из-за необходимости работы с файловой системой.
 
 ```
 hawk
 
 import json
 
-# Чтение из файла
-set data = json.read_file("config.json")
+set data = create_object("name:Hawk|version:1.0|active:true")
+print pretty(data)
 
-# Получение значений
-print json.get(data, "name")
-print json.get_nested(data, "user.profile.age")
+set nested = "{"
+set nested = nested + "\"user\":"
+set nested = nested + create_object("name:Mark|age:12")
+set nested = nested + ",\"settings\":"
+set nested = nested + create_object("theme:dark")
+set nested = nested + "}"
 
-# Проверка ключа
-if (json.has_key(data, "token") = "true") {
-    print "Token exists"
-}
+print get(data, "name")
+print get_nested(nested, "user.name")
+print has_key(data, "token")
+print keys(data)
 
-# Построение JSON
-set obj = json.create_object("name:Hawk|version:1.0")
-set arr = json.create_array("1|2|3|hello")
-
-# Форматирование
-print json.pretty(obj)
-print json.minify(obj)
+set arr = create_array("10|20|30|hello")
+print pretty(arr)
 ```
 
 | **Категория** | **Функция** | **Описание** |

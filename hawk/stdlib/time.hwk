@@ -1,6 +1,7 @@
 # time.hwk — Hawk Standard Library: Time & Date
-# Cross-platform. All functions use a Python backend so
-# formatting is stable regardless of system locale.
+# Built-ins: timestamp, now, today, clock, day_of_week, month, year, hour, minute
+# Cross-platform. All functions use built-ins so there is no
+# dependency on Python or shell commands.
 #
 # Usage: import time
 #
@@ -9,52 +10,42 @@
 #   print t          # 2026-09-08 22:03:16
 #   set ts = timestamp()  # 1788885830 (number)
 
-# ==================== INTERNAL HELPERS ====================
-
-fn _py(cmd) {
-    set py = "python3"
-    if (os_name() = "windows") {
-        set py = "python"
-    }
-    return shell_output(py + " -c \"" + cmd + "\"")
-}
-
 # ==================== DATE & TIME ====================
 
 fn now() {
-    return _py("import datetime; print(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))")
+    return now()
 }
 
 fn today() {
-    return _py("import datetime; print(datetime.date.today().isoformat())")
+    return today()
 }
 
 fn clock() {
-    return _py("import datetime; print(datetime.datetime.now().strftime('%H:%M:%S'))")
+    return clock()
 }
 
 fn timestamp() {
-    return to_number(_py("import time; print(int(time.time()))"))
+    return timestamp()
 }
 
 fn day_of_week() {
-    return _py("import datetime; print(datetime.datetime.now().strftime('%A'))")
+    return day_of_week()
 }
 
 fn month() {
-    return _py("import datetime; print(datetime.datetime.now().strftime('%B'))")
+    return month()
 }
 
 fn year() {
-    return _py("import datetime; print(datetime.datetime.now().strftime('%Y'))")
+    return year()
 }
 
 fn hour() {
-    return _py("import datetime; print(datetime.datetime.now().strftime('%H'))")
+    return hour()
 }
 
 fn minute() {
-    return _py("import datetime; print(datetime.datetime.now().strftime('%M'))")
+    return minute()
 }
 
 # ==================== SLEEP ====================
