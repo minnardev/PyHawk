@@ -2,7 +2,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Language-PyHawk%20v0.1-blue.svg" alt="PyHawk" />
-  <img src="https://img.shields.io/badge/Backend-Native%20C%20%2B%20Clang-green.svg" alt="Backend" />
+  <img src="https://img.shields.io/badge/Backend-Python%20Interpreter-green.svg" alt="Backend" />
   <img src="https://img.shields.io/badge/Matrices-In%20Core%20Syntax-orange.svg" alt="Matrices" />
   <img src="https://img.shields.io/badge/Platforms-macOS%20%7C%20Linux%20%7C%20Windows-brightgreen.svg" alt="Platforms" />
   <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License" />
@@ -19,8 +19,8 @@
    🦅 PyHawk — Sharp as a hawk, fast as math
 ```
 
-> **PyHawk** — полнофункциональный прототип языка Hawk на Python с прямой трансляцией в машинный Си (C99 -O3).
-> Создан для быстрой обкатки синтаксиса и тестирования фичей перед написанием компилятора на чистом Си.
+> **PyHawk** — полнофункциональный прототип языка Hawk на Python с интерпретатором.
+> Создан для быстрой обкатки синтаксиса и тестирования фичей.
 > Файлы исходного кода: `.hwk`
 
 ---
@@ -124,29 +124,12 @@ python3 hawk_cli.py repl
 # 2. Быстро выполнить скрипт через интерпретатор:
 python3 hawk_cli.py run examples/identity.hwk
 
-# 3. Посмотреть чистый C-код, который генерирует Hawk (идеально для изучения C!):
-python3 hawk_cli.py emit examples/identity.hwk
+# 3. Проверить синтаксис:
+python3 hawk_cli.py check examples/identity.hwk
 
-# 4. Скомпилировать в НАСТОЯЩИЙ бинарный файл через clang -O3:
-python3 hawk_cli.py build examples/identity.hwk -o my_app
-./my_app
+# 4. Форматировать код:
+python3 hawk_cli.py format examples/identity.hwk -w
 ```
-
----
-
-## 🧠 Архитектура: связь с языком C
-
-Компилятор Hawk транслирует ваш код в чистый Си с подключением высокоскоростного заголовочного файла `hawk_matrix.h`:
-
-```c
-typedef struct {
-    int rows;
-    int cols;
-    double *data;
-} Matrix;
-```
-
-Каждая операция над матрицами (`A * B`, `A'`, `det(A)`) превращается в прямые обращения к плоскому массиву памяти `data[row * cols + col]`, обеспечивая максимальную скорость процессора.
 
 ---
 
@@ -157,15 +140,19 @@ typedef struct {
 python3 test_hawk.py
 ```
 ```
-test_c_native_compilation ... ok
+test_booleans_and_comparisons ... ok
 test_chained_comparison ... ok
+test_circular_and_identifier_import ... ok
 test_equality_operator ... ok
+test_formatter ... ok
 test_functions_and_loops ... ok
 test_implicit_multiplication_and_math ... ok
+test_import_multi_file ... ok
 test_matrix_operations ... ok
+test_modulo_operator ... ok
 test_naked_assignment_error ... ok
 
-Ran 7 tests in 0.490s
+Ran 11 tests in 0.490s
 OK
 ```
 

@@ -183,29 +183,7 @@ function activate(context) {
         terminal.sendText(`pyhawk run "${filePath}"`);
     });
 
-    // 3. Command: Build Native Binary (C99 -O3)
-    let buildDisposable = vscode.commands.registerCommand('hawk.buildFile', async () => {
-        const editor = vscode.window.activeTextEditor;
-        if (!editor) {
-            vscode.window.showWarningMessage('PyHawk: No active file to compile.');
-            return;
-        }
-
-        if (editor.document.isDirty) {
-            await editor.document.save();
-        }
-
-        const filePath = editor.document.fileName;
-        const dir = path.dirname(filePath);
-        const nameWithoutExt = path.basename(filePath, path.extname(filePath));
-        const outBin = path.join(dir, nameWithoutExt);
-
-        const terminal = getHawkTerminal();
-        terminal.show(false);
-        terminal.sendText(`pyhawk build "${filePath}" && "${outBin}"`);
-    });
-
-    // 4. Command: Open REPL
+    // 3. Command: Open REPL
     let replDisposable = vscode.commands.registerCommand('hawk.openRepl', () => {
         const terminal = getHawkTerminal();
         terminal.show(false);
@@ -219,7 +197,7 @@ function activate(context) {
         }
     });
 
-    context.subscriptions.push(runDisposable, buildDisposable, replDisposable, formatDisposable);
+    context.subscriptions.push(runDisposable, replDisposable, formatDisposable);
 }
 
 function deactivate() {

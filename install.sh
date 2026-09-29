@@ -35,19 +35,16 @@ fi
 PY_VERSION=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
 echo -e "   ${GREEN}[OK]${NC} Python $PY_VERSION found: $(command -v python3)"
 
-# 2. Check C Compiler for native compilation
-if command -v clang &>/dev/null; then
-    echo -e "   ${GREEN}[OK]${NC} C compiler found: clang ($(clang --version | head -n 1))"
-elif command -v gcc &>/dev/null; then
-    echo -e "   ${GREEN}[OK]${NC} C compiler found: gcc ($(gcc --version | head -n 1))"
-else
-    echo -e "   ${YELLOW}[WARN]${NC} No C compiler (clang/gcc) found. Native C compilation ('pyhawk build') requires clang or gcc."
-    if [[ "$(uname)" == "Darwin" ]]; then
-        echo "     Tip on macOS: run 'xcode-select --install'"
-    else
-        echo "     Tip on Linux: run 'sudo apt install build-essential' or 'sudo dnf groupinstall \"Development Tools\"'"
-    fi
+# 2. Check Python 3
+echo -e "${YELLOW}Checking requirements...${NC}"
+if ! command -v python3 &>/dev/null; then
+    echo -e "${RED}[ERROR] Python 3 is required but was not found in PATH.${NC}"
+    echo "Please install Python 3.8 or newer (https://www.python.org) and run this installer again."
+    exit 1
 fi
+
+PY_VERSION=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
+echo -e "   ${GREEN}[OK]${NC} Python $PY_VERSION found: $(command -v python3)"
 
 # 3. Determine installation directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -154,5 +151,4 @@ echo -e "Try it right now:"
 echo -e "  ${CYAN}pyhawk version${NC}             # Check version"
 echo -e "  ${CYAN}pyhawk repl${NC}                # Interactive mathematical REPL"
 echo -e "  ${CYAN}pyhawk run <file.hwk>${NC}      # Run PyHawk script (Interpreter)"
-echo -e "  ${CYAN}pyhawk build <file.hwk>${NC}    # Compile to native C99 binary (clang -O3)"
 echo -e "\n${BOLD}Sharp as a hawk, fast as math.${NC}\n"

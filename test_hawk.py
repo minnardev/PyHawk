@@ -14,7 +14,6 @@ if SCRIPT_DIR not in sys.path:
 from hawk.lexer import Lexer, TokenType
 from hawk.parser import Parser
 from hawk.interpreter import Interpreter, HawkMatrix
-from hawk.transpiler import CTranspiler
 
 
 class TestHawk(unittest.TestCase):
@@ -25,16 +24,6 @@ class TestHawk(unittest.TestCase):
         interp = Interpreter(print_func=lambda *args: output.append(" ".join(str(a) for a in args)))
         interp.run(ast)
         return output
-
-    def build_and_run_native(self, code: str) -> list:
-        tokens = Lexer(code).tokenize()
-        ast = Parser(tokens).parse()
-        transpiler = CTranspiler()
-        bin_path = "/tmp/hawk_test_bin"
-        transpiler.build_native(ast, bin_path)
-        res = subprocess.run([bin_path], capture_output=True, text=True)
-        self.assertEqual(res.returncode, 0, f"Native run error: {res.stderr}")
-        return [line.strip() for line in res.stdout.strip().split("\n") if line.strip()]
 
     def test_implicit_multiplication_and_math(self):
         code = """
@@ -154,28 +143,6 @@ class TestHawk(unittest.TestCase):
         out = self.run_hawk(code)
         self.assertEqual(out, ["between", "correct"])
 
-    def test_c_native_compilation(self):
-        code = """
-        set a = 3
-        set b = 4
-        set c = sqrt(a^2 + b^2)
-        print "Гипотенуза:", c
-
-        set m = [1, 2 ; 3, 4]
-        print "det:", det(m)
-
-        set mod_val = 10 % 3
-        print "mod:", mod_val
-
-        set flag = true
-        print "flag:", flag
-        """
-        out = self.build_and_run_native(code)
-        self.assertTrue(any("Гипотенуза: 5" in line for line in out))
-        self.assertTrue(any("det: -2" in line for line in out))
-        self.assertTrue(any("mod: 1" in line for line in out))
-        self.assertTrue(any("flag: true" in line for line in out))
-
     def test_formatter(self):
         from hawk.formatter import format_code
         messy_code = """
@@ -191,27 +158,6 @@ set a = input("Enter: ")
         formatted = format_code(messy_code)
         expected = 'set a = input("Enter: ")\n\nif (a = 0) {\n    print "Win"\n} else {\n    print "Lose"\n}\n'
         self.assertEqual(formatted, expected)
-
-    def test_c_native_dynamic_types_and_calculator(self):
-        code = """
-        set a = 10
-        set b = 5
-        set c = "+"
-        set done = false
-        if (c = "+") {
-            print a + b
-            set done = true
-        }
-        if (c = "*") {
-            print a * b
-            set done = true
-        }
-        if (done = false) {
-            print "Fail"
-        }
-        """
-        out = self.build_and_run_native(code)
-        self.assertEqual(out, ["15"])
 
     def test_import_multi_file(self):
         import tempfile
@@ -244,14 +190,6 @@ set a = input("Enter: ")
             interp.run(ast)
             self.assertEqual(output, ["142"])
 
-            # 2. Test Native Compilation
-            transpiler = CTranspiler()
-            bin_path = os.path.join(tmpdir, "main_bin")
-            transpiler.build_native(ast, bin_path, current_file=main_path)
-            res = subprocess.run([bin_path], capture_output=True, text=True)
-            self.assertEqual(res.returncode, 0)
-            self.assertEqual(res.stdout.strip(), "142")
-
     def test_circular_and_identifier_import(self):
         import tempfile
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -282,14 +220,6 @@ set a = input("Enter: ")
                                  current_file=file_a)
             interp.run(ast)
             self.assertEqual(output, ["42"])
-
-            # Test native compiler
-            transpiler = CTranspiler()
-            bin_path = os.path.join(tmpdir, "circ_bin")
-            transpiler.build_native(ast, bin_path, current_file=file_a)
-            res = subprocess.run([bin_path], capture_output=True, text=True)
-            self.assertEqual(res.returncode, 0)
-            self.assertEqual(res.stdout.strip(), "42")
 
 
 if __name__ == "__main__":

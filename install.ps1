@@ -116,5 +116,4 @@ Write-Host "Try it in Command Prompt or PowerShell:"
 Write-Host "  pyhawk version" -ForegroundColor Cyan
 Write-Host "  pyhawk repl" -ForegroundColor Cyan
 Write-Host "  pyhawk run <file.hwk>" -ForegroundColor Cyan
-Write-Host "  pyhawk build <file.hwk>" -ForegroundColor Cyan
 Write-Host "`nSharp as a hawk, fast as math.`n"

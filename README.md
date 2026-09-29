@@ -2,7 +2,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Language-PyHawk%20v0.3.1-blue.svg" alt="PyHawk" />
-  <img src="https://img.shields.io/badge/Backend-Native%20C%20%2B%20Clang-green.svg" alt="Backend" />
+  <img src="https://img.shields.io/badge/Backend-Python%20Interpreter-green.svg" alt="Backend" />
   <img src="https://img.shields.io/badge/Matrices-In%20Core%20Syntax-orange.svg" alt="Matrices" />
   <img src="https://img.shields.io/badge/Modules-import%20system-purple.svg" alt="Modules" />
   <img src="https://img.shields.io/badge/Platforms-macOS%20%7C%20Linux%20%7C%20Windows-brightgreen.svg" alt="Platforms" />
@@ -20,7 +20,7 @@
    PyHawk — Sharp as a hawk, fast as math (v0.3.1)
 ```
 
-> **PyHawk** is a full-featured programming language with mathematical syntax, clean code design, and direct translation into native C (C99 -O3 via Clang/GCC).  
+> **PyHawk** is a full-featured programming language with mathematical syntax, clean code design, and a powerful Python-based interpreter.  
 > Source code files: `.hwk`
 
 ---
@@ -209,31 +209,32 @@ pyhawk repl
 # 2. Execute a file via interpreter:
 pyhawk run main.hwk
 
-# 3. Compile to native binary (C99 + Clang -O3):
-pyhawk build main.hwk -o my_app
-./my_app
-
-# 4. Inspect generated clean C code:
-pyhawk emit main.hwk
-
-# 5. Check syntax (JSON diagnostics for IDEs):
+# 3. Check syntax (JSON diagnostics for IDEs):
 pyhawk check main.hwk
 
-# 6. Format file:
+# 4. Format file:
 pyhawk format main.hwk -w
 
-# 7. Print language version:
+# 5. Print language version:
 pyhawk version
 ```
 
 ---
 
-## Architecture: Native C Integration
+## Standard Library
 
-The compiler translates Hawk code into strict ANSI C99 linked against the `hawk_matrix.h` runtime:
-- Matrix operations work directly on flat arrays `data[r * cols + c]` without extra allocations.
-- Dynamic operations and input routines are backed by a lightweight `HawkVal` engine.
-- All imported modules compile into a single translation unit — producing a final binary built with `-O3` optimizations running at bare-metal speeds.
+PyHawk includes a built-in standard library with zero external dependencies:
+
+- **math** — `sqrt`, `pow`, `sin`, `cos`, `tan`, `log`, `exp`, `floor`, `ceil`, `round`
+- **random** — `rand_float`, `rand_int`, `seed`
+- **time** — `now`, `today`, `timestamp`, `clock`, `day_of_week`, `month`, `year`, `hour`, `minute`
+- **strings** — `to_upper`, `to_lower`, `trim`, `contains`, `replace`, `split`, `join`, `length`, and more
+- **json** — `read_file`, `write_file`, `get`, `get_nested`, `set_key`, `pretty`, `minify`
+- **os** — `file_read`, `file_write`, `dir_list`, `get_cwd`, `get_home`, `exec`, and more
+- **requests** — `get`, `post`, `put`, `delete`, `patch`, `download`
+- **telegram** — `send_message`, `get_me`, `get_updates`, `edit_message`, `delete_message`
+
+All modules are written in pure HAWK and run without Python or shell dependencies.
 
 ---
 
@@ -245,8 +246,6 @@ python3 test_hawk.py
 ```
 ```text
 test_booleans_and_comparisons ... ok
-test_c_native_compilation ... ok
-test_c_native_dynamic_types_and_calculator ... ok
 test_chained_comparison ... ok
 test_circular_and_identifier_import ... ok
 test_equality_operator ... ok
@@ -258,8 +257,8 @@ test_matrix_operations ... ok
 test_modulo_operator ... ok
 test_naked_assignment_error ... ok
 
-----------------------------------------------------------------------
-Ran 13 tests in 2.411s
+---------------------------------------------------------------------
+Ran 11 tests in 2.0s
 OK
 ```
 

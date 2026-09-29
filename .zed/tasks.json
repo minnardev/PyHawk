@@ -10,26 +10,6 @@
     "allow_concurrent_runs": false
   },
   {
-    "label": "Hawk: Build & Run Native Binary",
-    "command": "/Library/Frameworks/Python.framework/Versions/3.14/bin/python3",
-    "args": ["/Users/mark/Documents/PythonPROGRAMM/HAWK/hawk_cli.py", "build", "$ZED_FILE"],
-    "tags": ["hawk"],
-    "hide": "never",
-    "shell": false,
-    "use_new_terminal": false,
-    "allow_concurrent_runs": false
-  },
-  {
-    "label": "Hawk: Show Generated C Code",
-    "command": "/Library/Frameworks/Python.framework/Versions/3.14/bin/python3",
-    "args": ["/Users/mark/Documents/PythonPROGRAMM/HAWK/hawk_cli.py", "emit", "$ZED_FILE"],
-    "tags": ["hawk"],
-    "hide": "never",
-    "shell": false,
-    "use_new_terminal": false,
-    "allow_concurrent_runs": false
-  },
-  {
     "label": "Hawk: Open REPL",
     "command": "/Library/Frameworks/Python.framework/Versions/3.14/bin/python3",
     "args": ["/Users/mark/Documents/PythonPROGRAMM/HAWK/hawk_cli.py", "repl"],

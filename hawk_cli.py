@@ -15,7 +15,6 @@ if SCRIPT_DIR not in sys.path:
 from hawk.lexer import Lexer
 from hawk.parser import Parser
 from hawk.interpreter import Interpreter
-from hawk.transpiler import CTranspiler
 
 HAWK_LOGO = r"""
      __   __  _______  _     _  ___   _ 
@@ -43,53 +42,6 @@ def cmd_run(args):
         ast = Parser(tokens).parse()
         interp = Interpreter(current_file=os.path.abspath(filepath))
         interp.run(ast)
-    except Exception as e:
-        print(f"{e}")
-        sys.exit(1)
-
-
-def cmd_build(args):
-    filepath = args.file
-    if not os.path.exists(filepath):
-        print(f"Hawk Error: File '{filepath}' not found!")
-        sys.exit(1)
-
-    output_path = args.output
-    if not output_path:
-        base_name = os.path.splitext(filepath)[0]
-        output_path = base_name
-
-    with open(filepath, "r", encoding="utf-8") as f:
-        code = f.read()
-
-    try:
-        print(f"Compiling '{os.path.basename(filepath)}' to native binary...")
-        tokens = Lexer(code).tokenize()
-        ast = Parser(tokens).parse()
-        transpiler = CTranspiler()
-        bin_file = transpiler.build_native(ast, os.path.abspath(output_path), current_file=os.path.abspath(filepath))
-        print(f"Successfully compiled to '{bin_file}'!")
-        print(f"   Run: ./{os.path.basename(bin_file)}")
-    except Exception as e:
-        print(f"{e}")
-        sys.exit(1)
-
-
-def cmd_emit(args):
-    filepath = args.file
-    if not os.path.exists(filepath):
-        print(f"Hawk Error: File '{filepath}' not found!")
-        sys.exit(1)
-
-    with open(filepath, "r", encoding="utf-8") as f:
-        code = f.read()
-
-    try:
-        tokens = Lexer(code).tokenize()
-        ast = Parser(tokens).parse()
-        transpiler = CTranspiler()
-        c_code = transpiler.transpile(ast, current_file=os.path.abspath(filepath))
-        print(c_code)
     except Exception as e:
         print(f"{e}")
         sys.exit(1)
@@ -177,15 +129,6 @@ def main():
     p_run = subparsers.add_parser("run", help="Run Hawk file via interpreter")
     p_run.add_argument("file", help="Path to .hwk file")
 
-    # build
-    p_build = subparsers.add_parser("build", help="Compile to native binary (C99 + clang -O3)")
-    p_build.add_argument("file", help="Path to .hwk file")
-    p_build.add_argument("-o", "--output", help="Output binary path")
-
-    # emit
-    p_emit = subparsers.add_parser("emit", help="Show generated clean C code")
-    p_emit.add_argument("file", help="Path to .hwk file")
-
     # repl
     subparsers.add_parser("repl", help="Interactive REPL console")
 
@@ -207,10 +150,6 @@ def main():
 
     if args.subcommand == "run":
         cmd_run(args)
-    elif args.subcommand == "build":
-        cmd_build(args)
-    elif args.subcommand == "emit":
-        cmd_emit(args)
     elif args.subcommand == "repl":
         cmd_repl(args)
     elif args.subcommand == "check":
