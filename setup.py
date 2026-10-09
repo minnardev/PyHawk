@@ -2,13 +2,13 @@ from setuptools import setup, find_packages
 
 setup(
     name="pyhawk",
-    version="0.3.1",
+    version="0.3.2",
     description="PyHawk Programming Language — Clean syntax, powerful modules (Python Prototype)",
     author="minnardev",
     packages=find_packages(),
     py_modules=["hawk_cli"],
     package_data={
-        "hawk": ["runtime/*.h", "stdlib/*.hwk"],
+        "hawk": ["stdlib/*.hwk", "stdlib/*.md"],
     },
     entry_points={
         "console_scripts": [

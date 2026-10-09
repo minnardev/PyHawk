@@ -2,8 +2,8 @@
   "name": "hawk-language",
   "displayName": "PyHawk",
   "icon": "./icon.png",
-  "description": "PyHawk Programming Language support with native compiler, runner, syntax linter & formatter",
-  "version": "0.4.1",
+  "description": "PyHawk Programming Language support with runner, syntax linter & formatter",
+  "version": "0.4.2",
   "publisher": "minnardev",
   "engines": {
     "vscode": "^1.70.0"
@@ -26,7 +26,11 @@
         "extensions": [
           ".hwk"
         ],
-        "configuration": "./language-configuration.json"
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./icon.png",
+          "dark": "./icon.png"
+        }
       }
     ],
     "grammars": [
@@ -44,12 +48,6 @@
         "icon": "$(play)"
       },
       {
-        "command": "hawk.buildFile",
-        "title": "Hawk: Build & Run Native Binary (C99 -O3)",
-        "category": "Hawk",
-        "icon": "$(gear)"
-      },
-      {
         "command": "hawk.openRepl",
         "title": "Hawk: Open REPL",
         "category": "Hawk",
@@ -62,11 +60,6 @@
           "command": "hawk.runFile",
           "when": "editorLangId == hawk || resourceExtname == .hwk",
           "group": "navigation@1"
-        },
-        {
-          "command": "hawk.buildFile",
-          "when": "editorLangId == hawk || resourceExtname == .hwk",
-          "group": "navigation@2"
         }
       ],
       "editor/title/run": [
@@ -74,11 +67,6 @@
           "command": "hawk.runFile",
           "when": "editorLangId == hawk || resourceExtname == .hwk",
           "group": "navigation@1"
-        },
-        {
-          "command": "hawk.buildFile",
-          "when": "editorLangId == hawk || resourceExtname == .hwk",
-          "group": "navigation@2"
         }
       ],
       "editor/context": [
@@ -86,11 +74,6 @@
           "command": "hawk.runFile",
           "when": "editorLangId == hawk || resourceExtname == .hwk",
           "group": "Hawk@1"
-        },
-        {
-          "command": "hawk.buildFile",
-          "when": "editorLangId == hawk || resourceExtname == .hwk",
-          "group": "Hawk@2"
         }
       ]
     },

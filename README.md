@@ -52,7 +52,7 @@ Hawk is **NOT** a domain-specific calculator. It is a language built for:
 - Structuring projects into clean multi-file modules (`import`).
 - Servers and network services.
 
-**Lineage:** Python (cleanliness and readability) + C (speed, native compilation) + MATLAB (matrices built into core syntax).
+**Lineage:** Python (cleanliness and readability) + MATLAB (matrices built into core syntax).
 
 ---
 
@@ -97,7 +97,7 @@ print is_even(7)      # false
 ```
 
 ### 4. Interactive Input (`input`)
-The `input("prompt: ")` function automatically handles types: numeric input parses as a number, text stays a string. Works identically in both the interpreter and compiled C binaries:
+The `input("prompt: ")` function automatically handles types: numeric input parses as a number, text stays a string:
 ```hawk
 set name = input("What's your name? ")
 print "Hello,", name
@@ -126,7 +126,7 @@ import "helpers.hwk"    # also supports: import "helpers" and import helpers
 set val = 5
 print square(val) + DEFAULT_OFFSET   # prints: 125
 ```
-> The compiler automatically tracks circular dependencies and duplicate includes (similar to `#pragma once`), bundling modules into a single high-speed binary without linker issues.
+> PyHawk automatically tracks circular dependencies and duplicate includes, preventing redundant re-execution.
 
 ### 6. Core Matrix Syntax (MATLAB-style)
 Semicolons `;` exist **exclusively inside matrices** to separate rows:
