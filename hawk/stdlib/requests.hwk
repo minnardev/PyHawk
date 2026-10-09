@@ -16,6 +16,10 @@ fn post(url, data) {
     return http_post(url, data)
 }
 
+fn post_headers(url, data, headers_json) {
+    return http_post(url, data, headers_json)
+}
+
 fn put(url, data) {
     return http_post(url, data)
 }

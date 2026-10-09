@@ -791,15 +791,33 @@ class Interpreter:
             if expr.callee == "http_post":
                 url = str(args[0]) if args else ""
                 data = str(args[1]) if len(args) > 1 else ""
+                headers_arg = args[2] if len(args) > 2 else ""
                 try:
                     import urllib.request
+                    import urllib.error
                     import ssl
                     ctx = ssl.create_default_context()
                     ctx.check_hostname = False
                     ctx.verify_mode = ssl.CERT_NONE
-                    req = urllib.request.Request(url, data=data.encode("utf-8"), method="POST")
-                    with urllib.request.urlopen(req, context=ctx, timeout=30) as resp:
+                    hdrs = {"Content-Type": "application/json"}
+                    if headers_arg:
+                        if isinstance(headers_arg, str):
+                            try:
+                                parsed = json.loads(headers_arg)
+                                if isinstance(parsed, dict):
+                                    hdrs.update(parsed)
+                            except Exception:
+                                pass
+                        elif isinstance(headers_arg, dict):
+                            hdrs.update(headers_arg)
+                    req = urllib.request.Request(url, data=data.encode("utf-8"), headers=hdrs, method="POST")
+                    with urllib.request.urlopen(req, context=ctx, timeout=60) as resp:
                         return resp.read().decode("utf-8", errors="replace")
+                except urllib.error.HTTPError as e:
+                    try:
+                        return e.read().decode("utf-8", errors="replace")
+                    except Exception:
+                        return str(e)
                 except Exception as e:
                     return str(e)
             if expr.callee == "http_download":
