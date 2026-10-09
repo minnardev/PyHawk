@@ -665,6 +665,9 @@ class Interpreter:
                 for p in parts:
                     if isinstance(obj, dict):
                         obj = obj.get(p, "")
+                    elif isinstance(obj, list) and p.isdigit():
+                        idx = int(p)
+                        obj = obj[idx] if 0 <= idx < len(obj) else ""
                     else:
                         obj = ""
                         break
