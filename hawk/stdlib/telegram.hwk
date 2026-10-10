@@ -1,50 +1,169 @@
-# telegram.hwk — Telegram Bot API
-# Uses built-in HTTP and JSON functions. No external dependencies.
+# telegram.hwk — Hawk Standard Library: Telegram Bot API
+# Pure Hawk implementation with built-in HTTP and JSON handling.
+# No external dependencies.
 #
 # Usage: import telegram
 #
-# All functions return JSON response as string.
+# All API methods return the JSON response from Telegram as a string.
 
-# ==================== BOT API ====================
+# ==================== CORE API ====================
 
 fn telegram_bot(token) {
     return token
 }
 
-fn _api(bot, method, params_str) {
+fn _api(bot, method, params_json) {
     set url = "https://api.telegram.org/bot" + bot + "/" + method
-    return http_post(url, params_str)
+    return http_post(url, params_json, "{\"Content-Type\": \"application/json\"}")
 }
 
+# ==================== SENDING MESSAGES ====================
+
 fn send_message(bot, chat_id, text) {
-    set params = "{\"chat_id\": " + chat_id + ", \"text\": " + text + "}"
+    set params = "{\"chat_id\": " + json_stringify(chat_id) + ", \"text\": " + json_stringify(text) + "}"
     return _api(bot, "sendMessage", params)
 }
+
+fn send_message_html(bot, chat_id, text) {
+    set params = "{\"chat_id\": " + json_stringify(chat_id) + ", \"text\": " + json_stringify(text) + ", \"parse_mode\": \"HTML\"}"
+    return _api(bot, "sendMessage", params)
+}
+
+fn send_message_markdown(bot, chat_id, text) {
+    set params = "{\"chat_id\": " + json_stringify(chat_id) + ", \"text\": " + json_stringify(text) + ", \"parse_mode\": \"MarkdownV2\"}"
+    return _api(bot, "sendMessage", params)
+}
+
+fn reply_to(bot, chat_id, message_id, text) {
+    set params = "{\"chat_id\": " + json_stringify(chat_id) + ", \"text\": " + json_stringify(text) + ", \"reply_to_message_id\": " + json_stringify(message_id) + "}"
+    return _api(bot, "sendMessage", params)
+}
+
+fn edit_message(bot, chat_id, message_id, text) {
+    set params = "{\"chat_id\": " + json_stringify(chat_id) + ", \"message_id\": " + json_stringify(message_id) + ", \"text\": " + json_stringify(text) + "}"
+    return _api(bot, "editMessageText", params)
+}
+
+fn delete_message(bot, chat_id, message_id) {
+    set params = "{\"chat_id\": " + json_stringify(chat_id) + ", \"message_id\": " + json_stringify(message_id) + "}"
+    return _api(bot, "deleteMessage", params)
+}
+
+fn pin_message(bot, chat_id, message_id) {
+    set params = "{\"chat_id\": " + json_stringify(chat_id) + ", \"message_id\": " + json_stringify(message_id) + "}"
+    return _api(bot, "pinChatMessage", params)
+}
+
+fn unpin_message(bot, chat_id, message_id) {
+    set params = "{\"chat_id\": " + json_stringify(chat_id) + ", \"message_id\": " + json_stringify(message_id) + "}"
+    return _api(bot, "unpinChatMessage", params)
+}
+
+# ==================== MEDIA & FILES ====================
+
+fn send_photo(bot, chat_id, photo_url, caption) {
+    set params = "{\"chat_id\": " + json_stringify(chat_id) + ", \"photo\": " + json_stringify(photo_url) + ", \"caption\": " + json_stringify(caption) + "}"
+    return _api(bot, "sendPhoto", params)
+}
+
+fn send_document(bot, chat_id, document_url, caption) {
+    set params = "{\"chat_id\": " + json_stringify(chat_id) + ", \"document\": " + json_stringify(document_url) + ", \"caption\": " + json_stringify(caption) + "}"
+    return _api(bot, "sendDocument", params)
+}
+
+fn send_voice(bot, chat_id, voice_url, caption) {
+    set params = "{\"chat_id\": " + json_stringify(chat_id) + ", \"voice\": " + json_stringify(voice_url) + ", \"caption\": " + json_stringify(caption) + "}"
+    return _api(bot, "sendVoice", params)
+}
+
+fn send_sticker(bot, chat_id, sticker_id) {
+    set params = "{\"chat_id\": " + json_stringify(chat_id) + ", \"sticker\": " + json_stringify(sticker_id) + "}"
+    return _api(bot, "sendSticker", params)
+}
+
+fn send_location(bot, chat_id, latitude, longitude) {
+    set params = "{\"chat_id\": " + json_stringify(chat_id) + ", \"latitude\": " + json_stringify(latitude) + ", \"longitude\": " + json_stringify(longitude) + "}"
+    return _api(bot, "sendLocation", params)
+}
+
+# ==================== ACTIONS & STATUS ====================
+
+fn send_action(bot, chat_id, action) {
+    # actions: "typing", "upload_photo", "record_voice", "upload_document", "find_location"
+    set params = "{\"chat_id\": " + json_stringify(chat_id) + ", \"action\": " + json_stringify(action) + "}"
+    return _api(bot, "sendChatAction", params)
+}
+
+# ==================== BOT & CHAT INFO ====================
 
 fn get_me(bot) {
     return _api(bot, "getMe", "{}")
 }
 
+fn get_chat(bot, chat_id) {
+    set params = "{\"chat_id\": " + json_stringify(chat_id) + "}"
+    return _api(bot, "getChat", params)
+}
+
+# ==================== POLLING & CALLBACKS ====================
+
 fn get_updates(bot) {
     return _api(bot, "getUpdates", "{}")
 }
 
-fn get_chat(bot, chat_id) {
-    set params = "{\"chat_id\": " + chat_id + "}"
-    return _api(bot, "getChat", params)
-}
-
-fn edit_message(bot, chat_id, message_id, text) {
-    set params = "{\"chat_id\": " + chat_id + ", \"message_id\": " + message_id + ", \"text\": " + text + "}"
-    return _api(bot, "editMessageText", params)
-}
-
-fn delete_message(bot, chat_id, message_id) {
-    set params = "{\"chat_id\": " + chat_id + ", \"message_id\": " + message_id + "}"
-    return _api(bot, "deleteMessage", params)
+fn get_updates_offset(bot, offset) {
+    set params = "{\"offset\": " + json_stringify(offset) + ", \"timeout\": 20}"
+    return _api(bot, "getUpdates", params)
 }
 
 fn answer_callback(bot, callback_query_id) {
-    set params = "{\"callback_query_id\": " + callback_query_id + "}"
+    set params = "{\"callback_query_id\": " + json_stringify(callback_query_id) + "}"
     return _api(bot, "answerCallbackQuery", params)
+}
+
+fn answer_callback_alert(bot, callback_query_id, text) {
+    set params = "{\"callback_query_id\": " + json_stringify(callback_query_id) + ", \"text\": " + json_stringify(text) + ", \"show_alert\": true}"
+    return _api(bot, "answerCallbackQuery", params)
+}
+
+# ==================== UPDATE EXTRACTORS ====================
+
+fn extract_last_update_id(updates_json) {
+    set val = json_get_nested(updates_json, "result.-1.update_id")
+    if (val = "") {
+        set val = json_get_nested(updates_json, "result.0.update_id")
+    }
+    return val
+}
+
+fn extract_last_chat_id(updates_json) {
+    set val = json_get_nested(updates_json, "result.-1.message.chat.id")
+    if (val = "") {
+        set val = json_get_nested(updates_json, "result.0.message.chat.id")
+    }
+    return val
+}
+
+fn extract_last_text(updates_json) {
+    set val = json_get_nested(updates_json, "result.-1.message.text")
+    if (val = "") {
+        set val = json_get_nested(updates_json, "result.0.message.text")
+    }
+    return val
+}
+
+fn extract_last_message_id(updates_json) {
+    set val = json_get_nested(updates_json, "result.-1.message.message_id")
+    if (val = "") {
+        set val = json_get_nested(updates_json, "result.0.message.message_id")
+    }
+    return val
+}
+
+fn extract_last_username(updates_json) {
+    set val = json_get_nested(updates_json, "result.-1.message.from.username")
+    if (val = "") {
+        set val = json_get_nested(updates_json, "result.0.message.from.username")
+    }
+    return val
 }

@@ -496,6 +496,11 @@ class Interpreter:
                 except OSError:
                     return -1.0
 
+            if expr.callee == "env":
+                var = str(args[0]) if args else ""
+                default_val = str(args[1]) if len(args) > 1 else ""
+                return os.environ.get(var, default_val)
+
             if expr.callee == "beep":
                 if sys.platform.startswith("win"):
                     try:
@@ -665,9 +670,13 @@ class Interpreter:
                 for p in parts:
                     if isinstance(obj, dict):
                         obj = obj.get(p, "")
-                    elif isinstance(obj, list) and p.isdigit():
-                        idx = int(p)
-                        obj = obj[idx] if 0 <= idx < len(obj) else ""
+                    elif isinstance(obj, list):
+                        try:
+                            idx = int(p)
+                            obj = obj[idx] if -len(obj) <= idx < len(obj) else ""
+                        except ValueError:
+                            obj = ""
+                            break
                     else:
                         obj = ""
                         break
