@@ -1,7 +1,7 @@
 # PyHawk Programming Language
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Language-PyHawk%20v0.3.2-blue.svg" alt="PyHawk" />
+  <img src="https://img.shields.io/badge/Language-PyHawk%20v0.4.1-blue.svg" alt="PyHawk" />
   <img src="https://img.shields.io/badge/Backend-Python%20Interpreter-green.svg" alt="Backend" />
   <img src="https://img.shields.io/badge/Matrices-In%20Core%20Syntax-orange.svg" alt="Matrices" />
   <img src="https://img.shields.io/badge/Modules-import%20system-purple.svg" alt="Modules" />
@@ -17,7 +17,7 @@
     |       ||       ||       ||     |_ 
     |   _   ||   _   ||   _   ||    _  |
     |__| |__||__| |__||__| |__||___| |_|
-   PyHawk — Clean syntax, powerful modules (v0.3.2)
+   PyHawk — Clean syntax, powerful modules (v0.4.1)
 ```
 
 > **PyHawk** is a full-featured programming language with mathematical syntax, clean code design, and a powerful Python-based interpreter.  
